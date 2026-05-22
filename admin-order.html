@@ -56,6 +56,88 @@
         .refresh-btn:hover {
             background: #155ab3;
         }
+        .orders-table-container {
+            overflow-x: auto;
+        }
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .orders-table th {
+            background: #1f6fd1;
+            color: white;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .orders-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ecf0f1;
+            vertical-align: middle;
+        }
+        .orders-table tr:hover {
+            background-color: #f8fafc;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-badge.pending {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+        .status-badge.confirmed {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        .status-badge.ready {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .status-badge.delivered {
+            background: #e0f2f1;
+            color: #00897b;
+        }
+        .status-badge.completed {
+            background: #e0f2f1;
+            color: #00897b;
+        }
+        .status-badge.cancelled {
+            background: #ffebee;
+            color: #c62828;
+        }
+        .view-details-btn {
+            background: #1f6fd1;
+            color: white;
+            border: none;
+            padding: 6px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .view-details-btn:hover {
+            background: #155ab3;
+        }
+        .status-select {
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 12px;
+        }
+        .customer-email {
+            font-size: 11px;
+            color: #888;
+            display: block;
+            margin-top: 3px;
+        }
     </style>
 </head>
 <body>
@@ -71,6 +153,7 @@
                     <a href="admin-order.html" class="nav-item active">Orders</a>
                     <a href="admin-product.html" class="nav-item">Products</a>
                     <a href="admin-inventory.html" class="nav-item">Inventory</a>
+                    <a href="admin-report.html" class="nav-item">Reports</a>
                 </div>
                 <div class="nav-section">
                     <a href="admin-settings.html" class="nav-item">
@@ -111,26 +194,28 @@
                 </div>
                 <div>
                     <label style="font-weight: 600;">Search:</label>
-                    <input type="text" id="admin-order-search" placeholder="Order # or Customer" style="width: 200px;">
+                    <input type="text" id="admin-order-search" placeholder="Order #, Customer, or Phone" style="width: 250px;">
                 </div>
                 <button id="admin-refresh-orders" class="refresh-btn">🔄 Refresh</button>
             </div>
             
             <div class="orders-table-container">
-                <div class="table-header">
-                    <div class="table-row header-row">
-                        <div class="table-cell">Order #</div>
-                        <div class="table-cell">Customer</div>
-                        <div class="table-cell">Phone Number</div>
-                        <div class="table-cell">Date</div>
-                        <div class="table-cell">Total</div>
-                        <div class="table-cell">Status</div>
-                        <div class="table-cell">Actions</div>
-                    </div>
-                </div>
-                <div class="table-body" id="orders-table-body">
-                    <div style="text-align: center; padding: 50px;">Loading orders...</div>
-                </div>
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th>Order #</th>
+                            <th>Customer</th>
+                            <th>Phone Number</th>
+                            <th>Date</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-table-body">
+                        <tr><td colspan="7" style="text-align: center; padding: 50px;">Loading orders...</td></tr>
+                    </tbody>
+                </table>
             </div>
         </main>
     </div>
@@ -152,6 +237,13 @@
         const db = getFirestore(app);
 
         let allOrders = [];
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
 
         async function loadAdminOrders() {
             const tbody = document.getElementById('orders-table-body');
@@ -177,12 +269,13 @@
                     filteredOrders = filteredOrders.filter(order => 
                         order.orderNumber?.toLowerCase().includes(searchTerm) ||
                         order.customerName?.toLowerCase().includes(searchTerm) ||
-                        order.customerPhone?.toLowerCase().includes(searchTerm)
+                        order.customerPhone?.toLowerCase().includes(searchTerm) ||
+                        order.customerEmail?.toLowerCase().includes(searchTerm)
                     );
                 }
                 
                 if (filteredOrders.length === 0) {
-                    tbody.innerHTML = '<div style="text-align: center; padding: 50px;">No orders found.</div>';
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 50px;">No orders found.</td></tr>';
                     return;
                 }
                 
@@ -191,46 +284,48 @@
                     const orderDate = order.orderDate ? new Date(order.orderDate).toLocaleDateString() : 'N/A';
                     const customerPhone = order.customerPhone || 'Not provided';
                     const cleanPhone = customerPhone.replace(/[^0-9]/g, '');
+                    const customerName = order.customerName || order.customerUsername || 'Guest';
+                    const customerEmail = order.customerEmail || '';
                     
                     let statusClass = '';
                     switch(order.status) {
-                        case 'Pending': statusClass = 'status-badge pending'; break;
-                        case 'Confirmed': statusClass = 'status-badge confirmed'; break;
-                        case 'Ready for Pickup': statusClass = 'status-badge ready'; break;
-                        case 'Completed': statusClass = 'status-badge delivered'; break;
-                        case 'Cancelled': statusClass = 'status-badge cancelled'; break;
-                        default: statusClass = 'status-badge pending';
+                        case 'Pending': statusClass = 'pending'; break;
+                        case 'Confirmed': statusClass = 'confirmed'; break;
+                        case 'Ready for Pickup': statusClass = 'ready'; break;
+                        case 'Completed': statusClass = 'completed'; break;
+                        case 'Cancelled': statusClass = 'cancelled'; break;
+                        default: statusClass = 'pending';
                     }
                     
                     html += `
-                        <div class="table-row data-row">
-                            <div class="table-cell" data-label="Order #">${order.orderNumber || order.id.substring(0, 8)}</div>
-                            <div class="table-cell" data-label="Customer">
-                                ${escapeHtml(order.customerName || order.customerUsername || 'Guest')}
-                                ${order.customerEmail && order.customerEmail !== 'guest@example.com' ? `<br><small style="color:#888;">${order.customerEmail}</small>` : ''}
-                            </div>
-                            <div class="table-cell" data-label="Phone">
+                        <tr>
+                            <td><strong>${escapeHtml(order.orderNumber || order.id.substring(0, 8))}</strong></td>
+                            <td>
+                                ${escapeHtml(customerName)}
+                                ${customerEmail && customerEmail !== 'guest@example.com' ? `<div class="customer-email">${escapeHtml(customerEmail)}</div>` : ''}
+                            </td>
+                            <td>
                                 <span class="phone-number">${escapeHtml(customerPhone)}</span>
                                 ${customerPhone !== 'Not provided' && customerPhone !== '+63 XXX XXX XXXX' ? `
                                     <a href="tel:${customerPhone}" class="call-btn" title="Call Customer">📞 Call</a>
                                     <a href="https://wa.me/${cleanPhone}" target="_blank" class="call-btn whatsapp-btn" title="WhatsApp">💬 WhatsApp</a>
                                 ` : ''}
-                            </div>
-                            <div class="table-cell" data-label="Date">${orderDate}</div>
-                            <div class="table-cell" data-label="Total">₱${(order.total || 0).toFixed(2)}</div>
-                            <div class="table-cell" data-label="Status">
-                                <select class="status-select" data-order-id="${order.id}" data-current-status="${order.status}" style="padding: 5px 10px; border-radius: 5px;">
+                            </td>
+                            <td>${orderDate}</td>
+                            <td><strong>₱${(order.total || 0).toFixed(2)}</strong></td>
+                            <td>
+                                <select class="status-select" data-order-id="${order.id}" data-current-status="${order.status}">
                                     <option value="Pending" ${order.status === 'Pending' ? 'selected' : ''}>Pending</option>
                                     <option value="Confirmed" ${order.status === 'Confirmed' ? 'selected' : ''}>Confirmed</option>
                                     <option value="Ready for Pickup" ${order.status === 'Ready for Pickup' ? 'selected' : ''}>Ready for Pickup</option>
                                     <option value="Completed" ${order.status === 'Completed' ? 'selected' : ''}>Completed</option>
                                     <option value="Cancelled" ${order.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
                                 </select>
-                            </div>
-                            <div class="table-cell" data-label="Actions">
-                                <button class="view-order-detail" data-order-id="${order.id}" style="padding: 5px 15px; background: #1f6fd1; color: white; border: none; border-radius: 5px; cursor: pointer;">📋 View Details</button>
-                            </div>
-                        </div>
+                            </td>
+                            <td>
+                                <button class="view-details-btn" data-order-id="${order.id}">📋 View Details</button>
+                            </td>
+                        </tr>
                     `;
                 }
                 tbody.innerHTML = html;
@@ -259,7 +354,7 @@
                 });
                 
                 // Add event listeners for view details
-                document.querySelectorAll('.view-order-detail').forEach(btn => {
+                document.querySelectorAll('.view-details-btn').forEach(btn => {
                     btn.addEventListener('click', () => {
                         const orderId = btn.getAttribute('data-order-id');
                         window.location.href = `admin-order-detail.html?id=${orderId}`;
@@ -268,15 +363,8 @@
                 
             } catch (error) {
                 console.error("Error loading orders:", error);
-                tbody.innerHTML = '<div style="text-align: center; padding: 50px; color: red;">Error loading orders: ' + error.message + '</div>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 50px; color: red;">Error loading orders</td></tr>';
             }
-        }
-        
-        function escapeHtml(text) {
-            if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
         }
         
         // Set up event listeners

@@ -1,0 +1,54 @@
+[debug] [2026-05-22T05:43:49.744Z] ----------------------------------------------------------------------
+[debug] [2026-05-22T05:43:49.746Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\Crisha Ann\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --only hosting
+[debug] [2026-05-22T05:43:49.747Z] CLI Version:   15.18.0
+[debug] [2026-05-22T05:43:49.747Z] Platform:      win32
+[debug] [2026-05-22T05:43:49.747Z] Node Version:  v24.16.0
+[debug] [2026-05-22T05:43:49.747Z] Time:          Fri May 22 2026 13:43:49 GMT+0800 (Philippine Standard Time)
+[debug] [2026-05-22T05:43:49.747Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-05-22T05:43:51.417Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-05-22T05:43:51.417Z] > authorizing via signed-in user (arponcristinejean230@gmail.com)
+[debug] [2026-05-22T05:43:51.417Z] [iam] checking project jangsukoreanstore-12ba2 for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2026-05-22T05:43:51.418Z] Checked if tokens are valid: true, expires at: 1779429545700
+[debug] [2026-05-22T05:43:51.418Z] Checked if tokens are valid: true, expires at: 1779429545700
+[debug] [2026-05-22T05:43:51.419Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/jangsukoreanstore-12ba2:testIamPermissions [none]
+[debug] [2026-05-22T05:43:51.419Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/jangsukoreanstore-12ba2:testIamPermissions  x-goog-user-project=jangsukoreanstore-12ba2
+[debug] [2026-05-22T05:43:51.419Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/jangsukoreanstore-12ba2:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-05-22T05:43:52.427Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/jangsukoreanstore-12ba2:testIamPermissions 200
+[debug] [2026-05-22T05:43:52.427Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/jangsukoreanstore-12ba2:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-05-22T05:43:52.428Z] Checked if tokens are valid: true, expires at: 1779429545700
+[debug] [2026-05-22T05:43:52.428Z] Checked if tokens are valid: true, expires at: 1779429545700
+[debug] [2026-05-22T05:43:52.428Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/jangsukoreanstore-12ba2 [none]
+[debug] [2026-05-22T05:43:52.743Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/jangsukoreanstore-12ba2 200
+[debug] [2026-05-22T05:43:52.743Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/jangsukoreanstore-12ba2 {"projectId":"jangsukoreanstore-12ba2","projectNumber":"935502137643","displayName":"JangsuKoreanStore","name":"projects/jangsukoreanstore-12ba2","resources":{"hostingSite":"jangsukoreanstore-12ba2"},"state":"ACTIVE","etag":"1_15048223-1a0f-4905-b2af-72b87f3b73eb"}
+[info] 
+[info] === Deploying to 'jangsukoreanstore-12ba2'...
+[info] 
+[info] i  deploying hosting 
+[debug] [2026-05-22T05:43:52.747Z] Checked if tokens are valid: true, expires at: 1779429545700
+[debug] [2026-05-22T05:43:52.747Z] Checked if tokens are valid: true, expires at: 1779429545700
+[debug] [2026-05-22T05:43:52.747Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/jangsukoreanstore-12ba2/sites/jangsukoreanstore-12ba2 [none]
+[debug] [2026-05-22T05:43:53.553Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/jangsukoreanstore-12ba2/sites/jangsukoreanstore-12ba2 200
+[debug] [2026-05-22T05:43:53.553Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/jangsukoreanstore-12ba2/sites/jangsukoreanstore-12ba2 {"name":"projects/jangsukoreanstore-12ba2/sites/jangsukoreanstore-12ba2","defaultUrl":"https://jangsukoreanstore-12ba2.web.app","type":"DEFAULT_SITE"}
+[debug] [2026-05-22T05:43:53.555Z] Checked if tokens are valid: true, expires at: 1779429545700
+[debug] [2026-05-22T05:43:53.556Z] Checked if tokens are valid: true, expires at: 1779429545700
+[debug] [2026-05-22T05:43:53.556Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/jangsukoreanstore-12ba2/versions [none]
+[debug] [2026-05-22T05:43:53.556Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/jangsukoreanstore-12ba2/versions {"status":"CREATED","labels":{"deployment-tool":"cli-firebase"}}
+[debug] [2026-05-22T05:43:54.696Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/jangsukoreanstore-12ba2/versions 200
+[debug] [2026-05-22T05:43:54.696Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/jangsukoreanstore-12ba2/versions {"name":"projects/935502137643/sites/jangsukoreanstore-12ba2/versions/4b7d7aec602727b6","status":"CREATED","config":{},"labels":{"deployment-tool":"cli-firebase"}}
+[info] i  hosting[jangsukoreanstore-12ba2]: beginning deploy... 
+[info] i  hosting[jangsukoreanstore-12ba2]: found 760127 files in . 
+[debug] [2026-05-22T05:45:03.298Z] [hosting] uploading with 200 concurrency
+[debug] [2026-05-22T05:45:03.299Z] [hosting] hash cache [] not populated
+[debug] [2026-05-22T05:45:03.553Z] Error: EBUSY: resource busy or locked, open 'C:\Users\Crisha Ann\ntuser.dat.LOG1'
+[error] 
+[error] Error: An unexpected error has occurred.
+[debug] [2026-05-22T05:45:03.554Z] Error: EBUSY: resource busy or locked, open 'C:\Users\Crisha Ann\ntuser.dat.LOG2'
+[error] 
+[error] Error: An unexpected error has occurred.
+[debug] [2026-05-22T05:45:03.554Z] Error: EBUSY: resource busy or locked, open 'C:\Users\Crisha Ann\NTUSER.DAT'
+[error] 
+[error] Error: An unexpected error has occurred.
+[debug] [2026-05-22T05:45:03.569Z] Error: EISDIR: illegal operation on a directory, read
+[error] 
+[error] Error: An unexpected error has occurred.
