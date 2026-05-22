@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="user.css">
+    <title>Jangsu Korean Store - Order Details</title>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <img src="images/logo.png" alt="KStore Logo">
+        </div>
+
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="products.html">Products</a>
+            <a href="about-us.html">About Us</a>
+        </nav>
+
+        <div class="header-actions">
+            <div class="cart-icon" id="cart-icon">
+                🛒
+                <span class="cart-badge" id="cart-badge">0</span>
+            </div>
+            <a href="user-profile.html" class="profile-icon-link">
+                <svg class="profile-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm-2 9a4 4 0 0 0-4 4v1a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-1a4 4 0 0 0-4-4h-4Z"/>
+                </svg>
+            </a>
+        </div>
+    </header>
+
+    <section class="order-details-section">
+        <div class="order-banner">
+            <div class="order-banner-left">
+                <a href="products.html" class="back-to-products-btn">← Back to Products</a>
+            </div>
+            <div class="order-banner-right">
+                <span>Products</span> <span class="separator">/</span> <span class="current-page">Order</span>
+            </div>
+        </div>
+
+        <div class="order-container">
+            <div class="order-image-column">
+                <div class="product-image-frame">
+                    <img src="images/drinks.jpg" alt="Product Image" id="order-product-image">
+                </div>
+            </div>
+            
+            <div class="order-details-column">
+                <h1 class="order-product-title" id="order-product-title">Loading...</h1>
+                <p class="order-product-description" id="order-product-description"></p>
+                
+                <div class="order-price-section">
+                    <span class="order-price-label">Price:</span>
+                    <span class="order-price-value" id="order-product-price">₱0.00</span>
+                </div>
+                
+                <div class="order-quantity-section">
+                    <label for="quantity" class="quantity-label">Quantity:</label>
+                    <div class="quantity-controls">
+                        <button class="quantity-btn minus" id="decrease-btn">−</button>
+                        <input type="number" id="quantity" name="quantity" value="1" min="1" max="99" readonly>
+                        <button class="quantity-btn plus" id="increase-btn">+</button>
+                    </div>
+                </div>
+                
+                <div class="order-action-buttons">
+                    <button class="add-to-cart-btn" id="add-to-cart-btn">Add to Cart</button>
+                    <button class="buy-now-btn" id="buy-now-btn">Buy Now</button>
+                </div>
+                
+                <div class="order-meta-info">
+                    <p><span class="meta-label">Category:</span> <span id="order-product-category"></span></p>
+                    <p><span class="meta-label">Availability:</span> <span class="in-stock" id="order-product-stock">In Stock</span></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="product-additional-info">
+            <h3>Product Details</h3>
+            <p id="order-product-full-desc"></p>
+        </div>
+    </section>
+
+    <div class="cart-overlay" id="cart-overlay"></div>
+    <div class="cart-sidebar" id="cart-sidebar">
+        <div class="cart-header">
+            <h2>Your Shopping Cart (<span id="cart-count">0</span>)</h2>
+            <button class="close-cart-btn" id="close-cart">×</button>
+        </div>
+        <div class="cart-items-container" id="cart-items-container">
+            <div class="empty-cart" id="empty-cart">
+                <div class="empty-cart-icon">🛒</div>
+                <p>Your cart is empty</p>
+                <p class="empty-cart-hint">Add items to get started</p>
+            </div>
+            <div class="cart-items-list" id="cart-items-list"></div>
+        </div>
+        <div class="cart-footer" id="cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span class="total-amount" id="cart-total">₱0.00</span>
+            </div>
+            <button class="view-order-btn" id="view-order-btn">View Order</button>
+        </div>
+    </div>
+
+    <footer>
+        <a href="#">Contact Us</a>
+        <span class="separator">|</span>
+        <a href="#">Privacy Policy</a>
+        <span class="copyright">© 2026 Jangsu Korean Store</span>
+    </footer>
+
+    <script type="module" src="cart-system.js"></script>
+    <script type="module" src="user-system.js"></script>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDmgqAxUzxgJqvYLPNoATqA3hBLYla2PR0",
+            authDomain: "jangsukoreanstore-12ba2.firebaseapp.com",
+            projectId: "jangsukoreanstore-12ba2",
+            storageBucket: "jangsukoreanstore-12ba2.firebasestorage.app",
+            messagingSenderId: "935502137643",
+            appId: "1:935502137643:web:454fc81b20e3c1b5ae9d6e"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        async function loadProduct() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('product');
+            
+            if (!productId) {
+                document.getElementById('order-product-title').textContent = 'Product not found';
+                return;
+            }
+            
+            try {
+                const productRef = doc(db, "products", productId);
+                const productSnap = await getDoc(productRef);
+                
+                if (productSnap.exists()) {
+                    const product = productSnap.data();
+                    
+                    document.getElementById('order-product-title').textContent = product.name || 'Product';
+                    document.getElementById('order-product-price').textContent = `₱${(product.price || 0).toFixed(2)}`;
+                    document.getElementById('order-product-category').textContent = product.category || 'General';
+                    document.getElementById('order-product-description').textContent = product.description || `${product.name} - Premium Korean product`;
+                    document.getElementById('order-product-full-desc').textContent = product.fullDesc || `Experience the authentic taste of ${product.name}. Perfect for any occasion.`;
+                    
+                    const stockStatus = (product.currentStock || 0) > 0 ? 'In Stock' : 'Out of Stock';
+                    const stockElement = document.getElementById('order-product-stock');
+                    if (stockElement) {
+                        stockElement.textContent = stockStatus;
+                        stockElement.style.color = (product.currentStock || 0) > 0 ? '#2e7d32' : '#c62828';
+                    }
+                    
+                    const imageElement = document.getElementById('order-product-image');
+                    if (imageElement) {
+                        imageElement.src = product.image || 'images/default.jpg';
+                        imageElement.alt = product.name;
+                    }
+                    
+                    window.currentProduct = {
+                        id: productId,
+                        name: product.name,
+                        price: product.price,
+                        image: product.image || 'images/default.jpg'
+                    };
+                } else {
+                    document.getElementById('order-product-title').textContent = 'Product not found';
+                }
+            } catch (error) {
+                console.error("Error loading product:", error);
+            }
+        }
+        
+        // Quantity controls
+        const decreaseBtn = document.getElementById('decrease-btn');
+        const increaseBtn = document.getElementById('increase-btn');
+        const quantityInput = document.getElementById('quantity');
+        
+        if (decreaseBtn) {
+            decreaseBtn.addEventListener('click', () => {
+                let val = parseInt(quantityInput.value);
+                if (val > 1) quantityInput.value = val - 1;
+            });
+        }
+        
+        if (increaseBtn) {
+            increaseBtn.addEventListener('click', () => {
+                let val = parseInt(quantityInput.value);
+                if (val < 99) quantityInput.value = val + 1;
+            });
+        }
+        
+        // Add to cart
+        const addToCartBtn = document.getElementById('add-to-cart-btn');
+        if (addToCartBtn) {
+            addToCartBtn.addEventListener('click', () => {
+                if (window.currentProduct) {
+                    const qty = parseInt(quantityInput.value);
+                    window.addToCart(window.currentProduct, qty);
+                }
+            });
+        }
+        
+        // Buy now
+        const buyNowBtn = document.getElementById('buy-now-btn');
+        if (buyNowBtn) {
+            buyNowBtn.addEventListener('click', () => {
+                if (window.currentProduct) {
+                    const qty = parseInt(quantityInput.value);
+                    const checkoutData = {
+                        items: [{
+                            id: window.currentProduct.id,
+                            name: window.currentProduct.name,
+                            price: window.currentProduct.price,
+                            quantity: qty,
+                            image: window.currentProduct.image
+                        }],
+                        total: window.currentProduct.price * qty
+                    };
+                    sessionStorage.setItem('checkoutData', JSON.stringify(checkoutData));
+                    window.location.href = 'checkout.html';
+                }
+            });
+        }
+        
+        loadProduct();
+    </script>
+</body>
+</html>

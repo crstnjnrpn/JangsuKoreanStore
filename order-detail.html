@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="user.css">
+    <title>Jangsu Korean Store - Order Details</title>
+    <style>
+        .order-detail-container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        .detail-section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .detail-section h3 {
+            color: #1f6fd1;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .info-row {
+            display: flex;
+            padding: 8px 0;
+        }
+        .info-label {
+            width: 140px;
+            font-weight: 600;
+            color: #666;
+        }
+        .info-value {
+            flex: 1;
+            color: #333;
+        }
+        .order-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .order-table th {
+            background: #1f6fd1;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        .order-table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .status-pending { background: #fff3e0; color: #f57c00; }
+        .status-confirmed { background: #e3f2fd; color: #1976d2; }
+        .status-ready { background: #e8f5e9; color: #2e7d32; }
+        .status-completed { background: #e0f2f1; color: #00897b; }
+        .status-cancelled { background: #ffebee; color: #c62828; }
+        .total-amount {
+            text-align: right;
+            font-size: 20px;
+            font-weight: 700;
+            color: #1f6fd1;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #1f6fd1;
+        }
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .back-btn:hover {
+            background: #5a6268;
+        }
+        .product-image {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <header>
+        <div class="logo">
+            <img src="images/logo.png" alt="KStore Logo">
+        </div>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="products.html">Products</a>
+            <a href="about-us.html">About Us</a>
+        </nav>
+        <div class="header-actions">
+            <div class="cart-icon" id="cart-icon">
+                🛒
+                <span class="cart-badge" id="cart-badge">0</span>
+            </div>
+            <a href="user-profile.html" class="profile-icon-link">
+                <svg class="profile-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm-2 9a4 4 0 0 0-4 4v1a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-1a4 4 0 0 0-4-4h-4Z"/>
+                </svg>
+            </a>
+        </div>
+    </header>
+
+    <main>
+        <div class="order-detail-container" id="order-detail-content">
+            <a href="user-profile.html" class="back-btn">← Back to My Orders</a>
+            <div style="text-align: center; padding: 50px;">Loading order details...</div>
+        </div>
+    </main>
+
+    <!-- Cart Sidebar -->
+    <div class="cart-overlay" id="cart-overlay"></div>
+    <div class="cart-sidebar" id="cart-sidebar">
+        <div class="cart-header">
+            <h2>Your Shopping Cart (<span id="cart-count">0</span>)</h2>
+            <button class="close-cart-btn" id="close-cart">×</button>
+        </div>
+        <div class="cart-items-container" id="cart-items-container">
+            <div class="empty-cart" id="empty-cart">
+                <div class="empty-cart-icon">🛒</div>
+                <p>Your cart is empty</p>
+                <p class="empty-cart-hint">Browse our products and add items to your cart</p>
+            </div>
+            <div class="cart-items-list" id="cart-items-list"></div>
+        </div>
+        <div class="cart-footer" id="cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span class="total-amount" id="cart-total">₱0.00</span>
+            </div>
+            <button class="view-order-btn" id="view-order-btn">View Order</button>
+        </div>
+    </div>
+
+    <footer>
+        <a href="#">Contact Us</a>
+        <span class="separator">|</span>
+        <a href="#">Privacy Policy</a>
+        <span class="copyright">© 2026 Jangsu Korean Store</span>
+    </footer>
+
+    <script src="cart-system.js"></script>
+    <script src="user-system.js"></script>
+
+    <!-- Firebase Order Details Loader -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDmgqAxUzxgJqvYLPNoATqA3hBLYla2PR0",
+            authDomain: "jangsukoreanstore-12ba2.firebaseapp.com",
+            projectId: "jangsukoreanstore-12ba2",
+            storageBucket: "jangsukoreanstore-12ba2.firebasestorage.app",
+            messagingSenderId: "935502137643",
+            appId: "1:935502137643:web:454fc81b20e3c1b5ae9d6e"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Get current logged in user
+        const userData = localStorage.getItem('userData');
+        const currentUser = userData ? JSON.parse(userData) : null;
+        const currentUsername = currentUser?.username || currentUser?.name || null;
+
+        // Get order ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderRef = urlParams.get('ref');
+        const orderId = urlParams.get('id');
+
+        async function loadOrderDetails() {
+            const container = document.getElementById('order-detail-content');
+            
+            // Use either ref or id parameter
+            const orderIdentifier = orderId || orderRef;
+            
+            if (!orderIdentifier) {
+                container.innerHTML = `
+                    <a href="user-profile.html" class="back-btn">← Back to My Orders</a>
+                    <div style="text-align: center; padding: 50px; color: red;">No order ID specified</div>
+                `;
+                return;
+            }
+            
+            try {
+                const orderDoc = doc(db, "orders", orderIdentifier);
+                const orderSnap = await getDoc(orderDoc);
+                
+                if (!orderSnap.exists()) {
+                    container.innerHTML = `
+                        <a href="user-profile.html" class="back-btn">← Back to My Orders</a>
+                        <div style="text-align: center; padding: 50px; color: red;">Order not found</div>
+                    `;
+                    return;
+                }
+                
+                const order = orderSnap.data();
+                
+                // Verify this order belongs to the logged in user
+                if (currentUsername && order.customerUsername !== currentUsername && 
+                    order.customerName !== currentUsername && 
+                    order.customerEmail !== currentUser?.email) {
+                    container.innerHTML = `
+                        <a href="user-profile.html" class="back-btn">← Back to My Orders</a>
+                        <div style="text-align: center; padding: 50px; color: red;">You do not have permission to view this order</div>
+                    `;
+                    return;
+                }
+                
+                const items = order.items || [];
+                const orderDate = order.orderDate ? new Date(order.orderDate).toLocaleString() : 'N/A';
+                const pickupDateTime = order.pickupDateTime || 'To be confirmed';
+                
+                let statusClass = '';
+                let statusIcon = '';
+                switch(order.status) {
+                    case 'Pending': statusClass = 'status-pending'; statusIcon = '⏳'; break;
+                    case 'Confirmed': statusClass = 'status-confirmed'; statusIcon = '✓'; break;
+                    case 'Ready for Pickup': statusClass = 'status-ready'; statusIcon = '✅'; break;
+                    case 'Completed': statusClass = 'status-completed'; statusIcon = '✔️'; break;
+                    case 'Cancelled': statusClass = 'status-cancelled'; statusIcon = '❌'; break;
+                    default: statusClass = 'status-pending'; statusIcon = '⏳';
+                }
+                
+                // Build items table
+                let itemsHtml = `
+                    <table class="order-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Product Name</th>
+                                <th>Quantity</th>
+                                <th>Unit Price</th>
+                                <th>Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                let total = 0;
+                for (const item of items) {
+                    const subtotal = item.price * item.quantity;
+                    total += subtotal;
+                    itemsHtml += `
+                        <tr>
+                            <td><img src="${item.image || 'images/default.jpg'}" class="product-image" onerror="this.src='images/default.jpg'"></td>
+                            <td><strong>${item.name}</strong></td>
+                            <td>${item.quantity}</td>
+                            <td>₱${item.price.toFixed(2)}</td>
+                            <td>₱${subtotal.toFixed(2)}</td>
+                        </tr>
+                    `;
+                }
+                
+                itemsHtml += `
+                        </tbody>
+                    </table>
+                    <div class="total-amount">
+                        Total Amount: ₱${total.toFixed(2)}
+                    </div>
+                `;
+                
+                container.innerHTML = `
+                    <a href="user-profile.html" class="back-btn">← Back to My Orders</a>
+                    
+                    <div class="detail-section">
+                        <h3>📋 Order Information</h3>
+                        <div class="info-row">
+                            <span class="info-label">Order Number:</span>
+                            <span class="info-value"><strong>${order.orderNumber || orderIdentifier}</strong></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Order Date:</span>
+                            <span class="info-value">${orderDate}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Order Status:</span>
+                            <span class="info-value"><span class="status-badge ${statusClass}">${statusIcon} ${order.status || 'Pending'}</span></span>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h3>👤 Shipping Information</h3>
+                        <div class="info-row">
+                            <span class="info-label">Customer Name:</span>
+                            <span class="info-value">${order.customerName || order.customerUsername || 'Guest'}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Email Address:</span>
+                            <span class="info-value">${order.customerEmail || 'Not provided'}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Phone Number:</span>
+                            <span class="info-value">${order.customerPhone || 'Not provided'}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h3>💰 Payment & Pickup</h3>
+                        <div class="info-row">
+                            <span class="info-label">Payment Method:</span>
+                            <span class="info-value">${order.paymentMethod || 'Cash On Pickup'}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Pickup Schedule:</span>
+                            <span class="info-value">${pickupDateTime}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h3>📦 Order Items</h3>
+                        ${itemsHtml}
+                    </div>
+                    
+                    <div style="margin-top: 20px; padding: 15px; background: #f0f7ff; border-radius: 8px; text-align: center;">
+                        <p style="color: #1f6fd1;">Thank you for shopping at Jangsu Korean Store!</p>
+                        <p style="font-size: 12px; color: #666;">Please present your order number when picking up your items.</p>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error("Error loading order:", error);
+                container.innerHTML = `
+                    <a href="user-profile.html" class="back-btn">← Back to My Orders</a>
+                    <div style="text-align: center; padding: 50px; color: red;">Error loading order: ${error.message}</div>
+                `;
+            }
+        }
+        
+        // Check if user is logged in
+        if (!currentUsername) {
+            document.getElementById('order-detail-content').innerHTML = `
+                <a href="user-profile.html" class="back-btn">← Back to My Orders</a>
+                <div style="text-align: center; padding: 50px;">
+                    <p>Please log in to view your order details.</p>
+                    <a href="user-login.html" style="display: inline-block; margin-top: 15px; padding: 10px 20px; background: #1f6fd1; color: white; text-decoration: none; border-radius: 8px;">Login Now</a>
+                </div>
+            `;
+        } else {
+            loadOrderDetails();
+        }
+    </script>
+</body>
+</html>

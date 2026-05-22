@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="user.css">
+    <title>Jangsu Korean Store - About Us</title>
+
+     <script type="module" src="cart-system.js"></script>
+     <script type="module" src="user-system.js"></script>
+</head>
+<body>
+
+    <!-- Navigation Bar (same as other pages) -->
+    <header>
+        <div class="logo">
+            <img src="images/logo.png" alt="KStore Logo">
+        </div>
+
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="products.html">Products</a>
+            <a href="about-us.html">About Us</a>
+        </nav>
+
+        <div class="header-actions">
+            <!-- Cart Icon with Badge -->
+            <div class="cart-icon" id="cart-icon">
+                🛒
+                <span class="cart-badge" id="cart-badge">0</span>
+            </div>
+            
+            <!-- Profile Icon - Direct link to profile.html -->
+            <a href="user-profile.html" class="profile-icon-link">
+                <svg class="profile-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm-2 9a4 4 0 0 0-4 4v1a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-1a4 4 0 0 0-4-4h-4Z"/>
+                </svg>
+            </a>
+        </div>
+    </header>
+
+    <!-- ========================================= -->
+    <!-- ABOUT US PAGE CONTENT -->
+    <!-- ========================================= -->
+    <main class="about-us-container">
+        
+        <!-- Page Title -->
+        <h1 class="about-title">About Us</h1>
+        
+        <!-- Decorative line under title (as in image) -->
+        <hr class="title-divider">
+        
+        <!-- Main content area with store image and text -->
+        <div class="about-content">
+            
+            <!-- Store Image (store.jpg as specified) -->
+            <div class="about-image-container">
+                <img src="images/store.jpg" alt="Jangsu Korean Store" class="about-store-image">
+            </div>
+            
+            <!-- Welcome Text Section -->
+            <div class="about-text-section">
+                <h2 class="about-welcome">Welcome To Jangsu Korean Store,</h2>
+                
+                <p class="about-paragraph">
+                    Your Trusted Neighborhood Source For Authentic Korean Products Here In Dasmarinas, Cavite. 
+                    Whether You're Craving Familiar Favorites Or Exploring New Flavors, We Bring A Little Piece 
+                    Of Korea Closer To Your Home.
+                </p>
+                
+                <!-- Subheading: OUR STORY -->
+                <h3 class="about-subheading">OUR STORY</h3>
+                
+                <p class="about-paragraph">
+                    Jangsu Korean Store started as a small family-run shop with a simple goal: to provide the 
+                    local community with quality Korean groceries, snacks, and household essentials. Over time, 
+                    we've grown into a go-to destination for Korean food lovers, students, and families in Cavite 
+                    and nearby areas.
+                </p>
+                
+                <p class="about-paragraph">
+                    Despite our growth, we noticed that many of our customers still had to visit the store just 
+                    to check product availability, promotions, or store hours. This often led to long waits, 
+                    miscommunication, and missed opportunities to serve you better.
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <a href="https://www.facebook.com/profile.php?id=61563538805687">Visit our Facebook Page</a>
+        <span class="separator">|</span>
+        <a href="#">Privacy Policy</a>
+        <span class="copyright">© 2026 Jangsu Korean Store</span>
+    </footer>
+
+    <!-- ===== CART SIDEBAR COMPONENT ===== -->
+    <!-- Cart Overlay -->
+    <div class="cart-overlay" id="cart-overlay"></div>
+
+    <!-- Cart Sidebar -->
+    <div class="cart-sidebar" id="cart-sidebar">
+        <div class="cart-header">
+            <h2>Your Shopping Cart (<span id="cart-count">0</span>)</h2>
+            <button class="close-cart-btn" id="close-cart">×</button>
+        </div>
+        
+        <div class="cart-items-container" id="cart-items-container">
+            <!-- Empty Cart Message -->
+            <div class="empty-cart" id="empty-cart">
+                <div class="empty-cart-icon">🛒</div>
+                <p>Your cart is empty</p>
+                <p class="empty-cart-hint">Browse our products and add items to your cart</p>
+            </div>
+            
+            <!-- Cart Items List -->
+            <div class="cart-items-list" id="cart-items-list"></div>
+        </div>
+        
+        <!-- Cart Footer -->
+        <div class="cart-footer" id="cart-footer">
+            <div class="cart-total">
+                <span>Estimated Total:</span>
+                <span class="total-amount" id="cart-total">₱0.00</span>
+            </div>
+            <button class="view-order-btn" id="view-order-btn">View Order</button>
+        </div>
+    </div>
+
+   
+</body>
+</body>
+</html>

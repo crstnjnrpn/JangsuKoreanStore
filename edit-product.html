@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="admin.css">
+    <title>Jangsu Korean Store - Edit Product</title>
+</head>
+<body>
+    <div class="admin-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Admin Dashboard</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">General</div>
+                    <a href="admin-dashboard.html" class="nav-item">Dashboard</a>
+                    <a href="admin-order.html" class="nav-item">Orders</a>
+                    <a href="admin-product.html" class="nav-item active">Products</a>
+                    <a href="admin-inventory.html" class="nav-item">Inventory</a>
+                    <a href="admin-report.html" class="nav-item">Reports</a>
+                </div>
+                <div class="nav-section">
+                    <a href="admin-settings.html" class="nav-item">
+                        <span class="nav-icon">⚙️</span> Settings
+                    </a>
+                </div>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="page-header">
+                <h1 class="page-title">Edit Product</h1>
+                <div class="welcome-message">
+                    <span class="welcome-text">Welcome,</span>
+                    <span class="admin-name">Admin</span>
+                </div>
+            </div>
+            
+            <h2 class="section-title">General</h2>
+            <h3 class="subsection-title">Edit Product</h3>
+            
+            <div class="edit-product-container">
+                <div class="form-section">
+                    <h4 class="form-section-title">Product Information</h4>
+                    
+                    <form id="edit-product-form" class="product-form">
+                        <input type="hidden" id="product-id">
+                        
+                        <div class="form-group form-group-full">
+                            <label for="product-name" class="form-label required">Product Name:</label>
+                            <input type="text" id="product-name" name="product-name" class="form-input" required>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="product-price" class="form-label required">Price:</label>
+                                <input type="number" id="product-price" name="product-price" class="form-input" min="0" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="stock-quantity" class="form-label required">Stock Quantity:</label>
+                                <input type="number" id="stock-quantity" name="stock-quantity" class="form-input" min="0" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="reserved-stock" class="form-label">Reserved Stock:</label>
+                                <input type="number" id="reserved-stock" name="reserved-stock" class="form-input" min="0" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="low-stock-threshold" class="form-label required">Low Stock Threshold:</label>
+                                <input type="number" id="low-stock-threshold" name="low-stock-threshold" class="form-input" min="0" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group form-group-full">
+                            <label for="product-category" class="form-label required">Category:</label>
+                            <select id="product-category" name="product-category" class="form-input" required>
+                                <option value="">Select category</option>
+                                <option value="Ramen">Ramen</option>
+                                <option value="Snacks">Snacks</option>
+                                <option value="Drinks">Drinks</option>
+                                <option value="Sauces">Sauces</option>
+                                <option value="Frozen">Frozen</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group form-group-full">
+                            <label class="form-label required">Status:</label>
+                            <div class="status-toggle-group">
+                                <label class="status-option active-status">
+                                    <input type="radio" name="status" value="Active"> 
+                                    <span>✅ Active</span>
+                                </label>
+                                <label class="status-option inactive-status">
+                                    <input type="radio" name="status" value="Inactive"> 
+                                    <span>❌ Inactive</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group form-group-full">
+                            <label for="product-image-url" class="form-label">Image URL:</label>
+                            <input type="text" id="product-image-url" name="product-image-url" class="form-input" placeholder="e.g., images/drinks.jpg">
+                            <small style="color: #666; display: block; margin-top: 5px;">Available: images/drinks.jpg, images/noodles.jpg, images/snacks.jpg, images/ice-cream.jpg, images/kimchi.jpg</small>
+                        </div>
+                        
+                        <div class="form-group form-group-full">
+                            <label class="form-label">Image Preview:</label>
+                            <div id="image-preview" style="margin-top: 10px;"></div>
+                        </div>
+                        
+                        <div class="form-group form-group-full">
+                            <label for="product-description" class="form-label">Short Description:</label>
+                            <textarea id="product-description" name="product-description" class="form-input" rows="2" placeholder="Brief product description..."></textarea>
+                        </div>
+                        
+                        <div class="form-group form-group-full">
+                            <label for="product-full-desc" class="form-label">Full Description:</label>
+                            <textarea id="product-full-desc" name="product-full-desc" class="form-input" rows="4" placeholder="Detailed product information..."></textarea>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="save-btn">💾 Save Changes</button>
+                            <a href="admin-product.html" class="cancel-btn">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="back-to-list">
+                <a href="admin-product.html" class="back-link">
+                    <span class="back-icon">←</span> Back to Product List
+                </a>
+            </div>
+        </main>
+    </div>
+    
+    <script type="module" src="admin-system.js"></script>
+</body>
+</html>

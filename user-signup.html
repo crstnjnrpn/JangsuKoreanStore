@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="user.css">
+    <title>Jangsu Korean Store - Sign Up</title>
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <header>
+        <div class="logo">
+            <img src="images/logo.png" alt="KStore Logo">
+        </div>
+
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="products.html">Products</a>
+            <a href="about-us.html">About Us</a>
+        </nav>
+
+        <div class="header-actions">
+            <div class="cart-icon" id="cart-icon">
+                🛒
+                <span class="cart-badge" id="cart-badge">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sign Up Page Content -->
+    <main class="signup-page">
+        <div class="signup-container">
+            
+            <h1 class="signup-title">Customer Sign Up</h1>
+            
+            <div class="login-breadcrumb">
+                <a href="index.html">Home</a>
+                <span class="separator">/</span>
+                <span>Sign Up</span>
+            </div>
+            
+            <div class="signup-form-container">
+                
+                <h2 class="signup-form-title">Create Account</h2>
+                
+                <form id="signup-form" class="signup-form">
+                    
+                    <div class="form-group">
+                        <label for="fullname">Full Name (Optional)</label>
+                        <input type="text" id="fullname" name="fullname" placeholder="Enter your full name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email Address *</label>
+                        <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="username">Username *</label>
+                        <input type="text" id="username" name="username" placeholder="Choose a username" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phone">Phone Number *</label>
+                        <input type="tel" id="phone" name="phone" placeholder="e.g., 09123456789" required>
+                        <small style="color: #666; display: block; margin-top: 5px;">Admin will call this number to confirm your order</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Password *</label>
+                        <input type="password" id="password" name="password" placeholder="Create a password (min. 6 characters)" required>
+                        <small style="color: #666; display: block; margin-top: 5px;">Password must be at least 6 characters long</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="confirm_password">Confirm Password *</label>
+                        <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm your password" required>
+                    </div>
+                    
+                    <button type="submit" class="signup-btn">Create Account</button>
+                    
+                    <div class="login-link">
+                        Already Have An Account? <a href="user-login.html">Log In</a>
+                    </div>
+                    
+                </form>
+                
+            </div>
+            
+        </div>
+    </main>
+
+    <div class="cart-overlay" id="cart-overlay"></div>
+    <div class="cart-sidebar" id="cart-sidebar">
+        <div class="cart-header">
+            <h2>Your Shopping Cart (<span id="cart-count">0</span>)</h2>
+            <button class="close-cart-btn" id="close-cart">×</button>
+        </div>
+        <div class="cart-items-container" id="cart-items-container">
+            <div class="empty-cart" id="empty-cart">
+                <div class="empty-cart-icon">🛒</div>
+                <p>Your cart is empty</p>
+                <p class="empty-cart-hint">Browse our products and add items to your cart</p>
+            </div>
+            <div class="cart-items-list" id="cart-items-list"></div>
+        </div>
+        <div class="cart-footer" id="cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span class="total-amount" id="cart-total">₱0.00</span>
+            </div>
+            <button class="view-order-btn" id="view-order-btn">View Order</button>
+        </div>
+    </div>
+
+    <footer>
+        <a href="#">Contact Us</a>
+        <span class="separator">|</span>
+        <a href="#">Privacy Policy</a>
+        <span class="copyright">© 2026 Jangsu Korean Store</span>
+    </footer>
+
+    <script src="cart-system.js"></script>
+    <script src="user-system.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const signupForm = document.getElementById('signup-form');
+            
+            if (signupForm) {
+                signupForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const fullname = document.getElementById('fullname').value;
+                    const email = document.getElementById('email').value;
+                    const username = document.getElementById('username').value;
+                    const phone = document.getElementById('phone').value;
+                    const password = document.getElementById('password').value;
+                    const confirmPassword = document.getElementById('confirm_password').value;
+                    
+                    if (!email || !username || !phone || !password) {
+                        alert('Please fill in all required fields (*)');
+                        return;
+                    }
+                    
+                    if (password.length < 6) {
+                        alert('Password must be at least 6 characters long');
+                        return;
+                    }
+                    
+                    if (password !== confirmPassword) {
+                        alert('Passwords do not match!');
+                        return;
+                    }
+                    
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(email)) {
+                        alert('Please enter a valid email address');
+                        return;
+                    }
+                    
+                    const phoneRegex = /^[0-9+\-\s()]{10,15}$/;
+                    if (!phoneRegex.test(phone)) {
+                        alert('Please enter a valid phone number (e.g., 09123456789)');
+                        return;
+                    }
+                    
+                    const existingUsers = JSON.parse(localStorage.getItem('allUsers') || '[]');
+                    const userExists = existingUsers.some(function(u) { 
+                        return u.username === username || u.email === email; 
+                    });
+                    
+                    if (userExists) {
+                        alert('Username or email already exists. Please login or use different credentials.');
+                        return;
+                    }
+                    
+                    const newUserData = {
+                        email: email,
+                        username: username,
+                        name: fullname || username,
+                        initials: (fullname ? fullname.substring(0, 2) : username.substring(0, 2)).toUpperCase(),
+                        phone: phone,
+                        role: 'user',
+                        createdAt: new Date().toISOString()
+                    };
+                    
+                    existingUsers.push({
+                        username: username,
+                        email: email,
+                        password: password,
+                        userData: newUserData
+                    });
+                    localStorage.setItem('allUsers', JSON.stringify(existingUsers));
+                    
+                    localStorage.setItem('userData', JSON.stringify(newUserData));
+                    localStorage.setItem('userLoggedIn', 'true');
+                    localStorage.setItem('userRole', 'user');
+                    localStorage.removeItem('adminLoggedIn');
+                    
+                    alert('✓ Sign up successful! Welcome ' + username + '!');
+                    
+                    window.location.href = 'index.html';
+                });
+            }
+        });
+    </script>
+</body>
+</html>

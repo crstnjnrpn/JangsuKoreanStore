@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="admin.css">
+    <title>Jangsu Korean Store - Admin Inventory</title>
+</head>
+<body>
+    <div class="admin-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Admin Dashboard</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">General</div>
+                    <a href="admin-dashboard.html" class="nav-item">Dashboard</a>
+                    <a href="admin-order.html" class="nav-item">Orders</a>
+                    <a href="admin-product.html" class="nav-item">Products</a>
+                    <a href="admin-inventory.html" class="nav-item active">Inventory</a>
+                </div>
+                <div class="nav-section">
+                    <a href="admin-settings.html" class="nav-item">
+                        <span class="nav-icon">⚙️</span> Settings
+                    </a>
+                </div>
+                <div class="nav-section" style="margin-top: auto; padding-top: 20px; border-top: 1px solid #34495e;">
+                    <a href="#" class="nav-item" id="admin-sidebar-logout" style="color: #ff6b6b;">
+                        <span class="nav-icon">🚪</span> Logout
+                    </a>
+                </div>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="page-header">
+                <h1 class="page-title">Inventory Management</h1>
+                <div class="welcome-message">
+                    <span class="welcome-text">Welcome,</span>
+                    <span class="admin-name" id="admin-name">Admin</span>
+                </div>
+            </div>
+            
+            <div class="inventory-stats">
+                <div class="stat-box">
+                    <h3>Total Products</h3>
+                    <div class="number" id="total-products">0</div>
+                </div>
+                <div class="stat-box">
+                    <h3>Total Stock Value</h3>
+                    <div class="number" id="total-value">₱0</div>
+                </div>
+                <div class="stat-box">
+                    <h3>Low Stock Items</h3>
+                    <div class="number" id="low-stock-total">0</div>
+                </div>
+            </div>
+            
+            <div class="inventory-container" id="inventory-list">
+                <div style="text-align: center; padding: 50px;">Loading inventory...</div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module" src="admin-system.js"></script>
+</body>
+</html>

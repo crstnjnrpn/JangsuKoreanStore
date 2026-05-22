@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="admin.css">
+    <title>Jangsu Korean Store - Order Details</title>
+</head>
+<body>
+    <div class="admin-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Admin Dashboard</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">General</div>
+                    <a href="admin-dashboard.html" class="nav-item">Dashboard</a>
+                    <a href="admin-order.html" class="nav-item active">Orders</a>
+                    <a href="admin-product.html" class="nav-item">Products</a>
+                    <a href="admin-inventory.html" class="nav-item">Inventory</a>
+                </div>
+                <div class="nav-section">
+                    <a href="admin-settings.html" class="nav-item">
+                        <span class="nav-icon">⚙️</span> Settings
+                    </a>
+                </div>
+                <div class="nav-section" style="margin-top: auto; padding-top: 20px; border-top: 1px solid #34495e;">
+                    <a href="#" class="nav-item" id="admin-sidebar-logout" style="color: #ff6b6b;">
+                        <span class="nav-icon">🚪</span> Logout
+                    </a>
+                </div>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <a href="admin-order.html" class="back-btn">← Back to Orders</a>
+            
+            <div id="order-detail-content">
+                <div style="text-align: center; padding: 50px;">Loading order details...</div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDmgqAxUzxgJqvYLPNoATqA3hBLYla2PR0",
+            authDomain: "jangsukoreanstore-12ba2.firebaseapp.com",
+            projectId: "jangsukoreanstore-12ba2",
+            storageBucket: "jangsukoreanstore-12ba2.firebasestorage.app",
+            messagingSenderId: "935502137643",
+            appId: "1:935502137643:web:454fc81b20e3c1b5ae9d6e"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Get order ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('id');
+
+        async function loadOrderDetails() {
+            const container = document.getElementById('order-detail-content');
+            
+            if (!orderId) {
+                container.innerHTML = '<div style="text-align: center; padding: 50px; color: red;">No order ID specified</div>';
+                return;
+            }
+            
+            try {
+                const orderRef = doc(db, "orders", orderId);
+                const orderSnap = await getDoc(orderRef);
+                
+                if (!orderSnap.exists()) {
+                    container.innerHTML = '<div style="text-align: center; padding: 50px; color: red;">Order not found</div>';
+                    return;
+                }
+                
+                const order = orderSnap.data();
+                const items = order.items || [];
+                const orderDate = order.orderDate ? new Date(order.orderDate).toLocaleString() : 'N/A';
+                
+                let statusClass = '';
+                switch(order.status) {
+                    case 'Pending': statusClass = 'status-pending'; break;
+                    case 'Confirmed': statusClass = 'status-confirmed'; break;
+                    case 'Ready for Pickup': statusClass = 'status-ready'; break;
+                    case 'Completed': statusClass = 'status-completed'; break;
+                    case 'Cancelled': statusClass = 'status-cancelled'; break;
+                    default: statusClass = 'status-pending';
+                }
+                
+                let itemsHtml = `
+                    <table class="product-table">
+                        <thead>
+                            <tr>
+                                <th>Product Image</th>
+                                <th>Product Name</th>
+                                <th>Quantity</th>
+                                <th>Unit Price</th>
+                                <th>Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                let total = 0;
+                for (const item of items) {
+                    const subtotal = item.price * item.quantity;
+                    total += subtotal;
+                    itemsHtml += `
+                        <tr>
+                            <td><img src="${item.image || 'images/default.jpg'}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;" onerror="this.src='images/default.jpg'"></td>
+                            <td>${item.name}</td>
+                            <td>${item.quantity}</td>
+                            <td>₱${item.price.toFixed(2)}</td>
+                            <td>₱${subtotal.toFixed(2)}</td>
+                        </tr>
+                    `;
+                }
+                
+                itemsHtml += `
+                        </tbody>
+                     </table>
+                     <div class="total-amount">
+                        Total Amount: ₱${total.toFixed(2)}
+                     </div>
+                `;
+                
+                const phoneNumber = order.customerPhone || 'Not provided';
+                const cleanPhone = phoneNumber.replace(/[^0-9]/g, '');
+                
+                container.innerHTML = `
+                    <div class="order-detail-card">
+                        <div class="detail-header">
+                            <h3>📋 Order Information</h3>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Order Number:</span>
+                            <span class="info-value"><strong>${order.orderNumber || orderId.substring(0, 8)}</strong></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Order Date:</span>
+                            <span class="info-value">${orderDate}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Order Status:</span>
+                            <span class="info-value"><span class="status-badge ${statusClass}">${order.status || 'Pending'}</span></span>
+                        </div>
+                    </div>
+                    
+                    <div class="order-detail-card">
+                        <div class="detail-header">
+                            <h3>👤 Customer Information</h3>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Customer Name:</span>
+                            <span class="info-value"><strong>${order.customerName || order.customerUsername || 'Guest'}</strong></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Email Address:</span>
+                            <span class="info-value">${order.customerEmail || 'Not provided'}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Phone Number:</span>
+                            <span class="info-value">
+                                ${phoneNumber}
+                                ${phoneNumber !== 'Not provided' ? `
+                                    <a href="tel:${phoneNumber}" class="call-btn" style="background: #1f6fd1;">📞 Call</a>
+                                    <a href="https://wa.me/${cleanPhone}" target="_blank" class="call-btn">💬 WhatsApp</a>
+                                ` : ''}
+                            </span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Username:</span>
+                            <span class="info-value">${order.customerUsername || 'Not provided'}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="order-detail-card">
+                        <div class="detail-header">
+                            <h3>📦 Order Items</h3>
+                        </div>
+                        ${itemsHtml}
+                    </div>
+                    
+                    <div class="order-detail-card">
+                        <div class="detail-header">
+                            <h3>💰 Payment & Pickup</h3>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Payment Method:</span>
+                            <span class="info-value">${order.paymentMethod || 'Cash On Pickup'}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Pickup Schedule:</span>
+                            <span class="info-value">${order.pickupDateTime || 'To be confirmed'}</span>
+                        </div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error("Error loading order:", error);
+                container.innerHTML = `<div style="text-align: center; padding: 50px; color: red;">Error loading order: ${error.message}</div>`;
+            }
+        }
+        
+        // Logout
+        document.getElementById('admin-sidebar-logout')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (confirm('Are you sure you want to log out?')) {
+                localStorage.removeItem('userData');
+                localStorage.removeItem('userLoggedIn');
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('adminLoggedIn');
+                window.location.href = 'index.html';
+            }
+        });
+        
+        loadOrderDetails();
+    </script>
+</body>
+</html>

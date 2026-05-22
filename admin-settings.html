@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="admin.css">
+    <title>Jangsu Korean Store - Admin Settings</title>
+</head>
+<body>
+    <div class="admin-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Admin Dashboard</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">General</div>
+                    <a href="admin-dashboard.html" class="nav-item">Dashboard</a>
+                    <a href="admin-order.html" class="nav-item">Orders</a>
+                    <a href="admin-product.html" class="nav-item">Products</a>
+                    <a href="admin-inventory.html" class="nav-item">Inventory</a>
+                </div>
+                <div class="nav-section">
+                    <a href="admin-settings.html" class="nav-item active">
+                        <span class="nav-icon">⚙️</span> Settings
+                    </a>
+                </div>
+                <div class="nav-section" style="margin-top: auto; padding-top: 20px; border-top: 1px solid #34495e;">
+                    <a href="#" class="nav-item" id="admin-sidebar-logout" style="color: #ff6b6b;">
+                        <span class="nav-icon">🚪</span> Logout
+                    </a>
+                </div>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="page-header">
+                <h1 class="page-title">Settings</h1>
+                <div class="welcome-message">
+                    <span class="welcome-text">Welcome,</span>
+                    <span class="admin-name" id="admin-name-display">Admin</span>
+                </div>
+            </div>
+            
+            <div class="settings-main-container">
+                <div class="settings-card">
+                    <div class="settings-card-header">
+                        <span class="settings-card-icon">👤</span>
+                        <h3>Profile Settings</h3>
+                    </div>
+                    <div class="settings-card-body">
+                        <div class="settings-form-group">
+                            <label for="admin-name">Admin Name</label>
+                            <input type="text" id="admin-name" class="settings-input" placeholder="Enter admin name" value="Admin">
+                        </div>
+                        <div class="settings-form-group">
+                            <label for="admin-email">Email Address</label>
+                            <input type="email" id="admin-email" class="settings-input" placeholder="Enter email address" value="admin@jangsu.com">
+                        </div>
+                        <div class="settings-form-group">
+                            <label for="admin-phone">Phone Number</label>
+                            <input type="tel" id="admin-phone" class="settings-input" placeholder="Enter phone number" value="+63 XXX XXX XXXX">
+                        </div>
+                        <button class="settings-save-btn" id="save-profile-btn">Save Profile Changes</button>
+                    </div>
+                </div>
+                
+                <div class="settings-card">
+                    <div class="settings-card-header">
+                        <span class="settings-card-icon">🏪</span>
+                        <h3>Store Settings</h3>
+                    </div>
+                    <div class="settings-card-body">
+                        <div class="settings-form-group">
+                            <label for="store-name">Store Name</label>
+                            <input type="text" id="store-name" class="settings-input" placeholder="Store name" value="Jangsu Korean Store">
+                        </div>
+                        <div class="settings-form-group">
+                            <label for="low-stock-default">Low Stock Threshold (Default)</label>
+                            <input type="number" id="low-stock-default" class="settings-input" min="0" value="10">
+                        </div>
+                        <button class="settings-save-btn" id="save-store-btn">Save Store Settings</button>
+                    </div>
+                </div>
+                
+                <div class="settings-card">
+                    <div class="settings-card-header">
+                        <span class="settings-card-icon">💾</span>
+                        <h3>Backup Data</h3>
+                    </div>
+                    <div class="settings-card-body">
+                        <div class="settings-button-group">
+                            <button class="settings-action-btn backup-btn" id="export-products-btn">
+                                <span>📥</span> Export Products to CSV
+                            </button>
+                            <button class="settings-action-btn backup-btn" id="export-orders-btn">
+                                <span>📥</span> Export Orders to CSV
+                            </button>
+                        </div>
+                        <p class="settings-hint">Export products and orders as CSV files for backup.</p>
+                    </div>
+                </div>
+                
+                <div class="settings-card">
+                    <div class="settings-card-header">
+                        <span class="settings-card-icon">🚪</span>
+                        <h3>Account</h3>
+                    </div>
+                    <div class="settings-card-body">
+                        <div class="danger-actions">
+                            <button class="danger-btn logout-btn" id="settings-logout-btn">Logout</button>
+                        </div>
+                        <p class="settings-hint">Click logout to exit the admin dashboard.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDmgqAxUzxgJqvYLPNoATqA3hBLYla2PR0",
+            authDomain: "jangsukoreanstore-12ba2.firebaseapp.com",
+            projectId: "jangsukoreanstore-12ba2",
+            storageBucket: "jangsukoreanstore-12ba2.firebasestorage.app",
+            messagingSenderId: "935502137643",
+            appId: "1:935502137643:web:454fc81b20e3c1b5ae9d6e"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Export Products to CSV
+        document.getElementById('export-products-btn')?.addEventListener('click', async () => {
+            try {
+                const querySnapshot = await getDocs(collection(db, "products"));
+                const products = [];
+                querySnapshot.forEach((doc) => {
+                    products.push({ id: doc.id, ...doc.data() });
+                });
+                
+                const headers = ['ID', 'Name', 'Price', 'Category', 'Current Stock', 'Reserved Stock', 'Status'];
+                const rows = products.map(p => [
+                    p.id, p.name || '', p.price || 0, p.category || '',
+                    p.currentStock || 0, p.reservedStock || 0, p.status || ''
+                ]);
+                
+                const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `products_export_${new Date().toISOString().slice(0,19)}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+                alert('Products exported successfully!');
+            } catch (error) {
+                alert('Error exporting products: ' + error.message);
+            }
+        });
+
+        // Export Orders to CSV
+        document.getElementById('export-orders-btn')?.addEventListener('click', async () => {
+            try {
+                const querySnapshot = await getDocs(collection(db, "orders"));
+                const orders = [];
+                querySnapshot.forEach((doc) => {
+                    orders.push({ id: doc.id, ...doc.data() });
+                });
+                
+                const headers = ['Order ID', 'Order Number', 'Customer Name', 'Total', 'Status', 'Payment Method', 'Order Date'];
+                const rows = orders.map(o => [
+                    o.id, o.orderNumber || '', o.customerName || 'Guest',
+                    o.total || 0, o.status || 'Pending', o.paymentMethod || 'Cash On Pickup',
+                    o.orderDate ? new Date(o.orderDate).toLocaleDateString() : ''
+                ]);
+                
+                const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `orders_export_${new Date().toISOString().slice(0,19)}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+                alert('Orders exported successfully!');
+            } catch (error) {
+                alert('Error exporting orders: ' + error.message);
+            }
+        });
+
+        // Load saved settings
+        const savedStoreName = localStorage.getItem('store_name');
+        const savedLowStock = localStorage.getItem('low_stock_threshold');
+        const savedAdminName = localStorage.getItem('admin_name');
+        const savedAdminEmail = localStorage.getItem('admin_email');
+        const savedAdminPhone = localStorage.getItem('admin_phone');
+        
+        if (savedStoreName) document.getElementById('store-name').value = savedStoreName;
+        if (savedLowStock) document.getElementById('low-stock-default').value = savedLowStock;
+        if (savedAdminName) document.getElementById('admin-name').value = savedAdminName;
+        if (savedAdminEmail) document.getElementById('admin-email').value = savedAdminEmail;
+        if (savedAdminPhone) document.getElementById('admin-phone').value = savedAdminPhone;
+        
+        document.getElementById('save-store-btn')?.addEventListener('click', () => {
+            const storeName = document.getElementById('store-name').value;
+            const lowStock = document.getElementById('low-stock-default').value;
+            localStorage.setItem('store_name', storeName);
+            localStorage.setItem('low_stock_threshold', lowStock);
+            alert('Store settings saved!');
+        });
+        
+        document.getElementById('save-profile-btn')?.addEventListener('click', () => {
+            const adminName = document.getElementById('admin-name').value;
+            const adminEmail = document.getElementById('admin-email').value;
+            const adminPhone = document.getElementById('admin-phone').value;
+            localStorage.setItem('admin_name', adminName);
+            localStorage.setItem('admin_email', adminEmail);
+            localStorage.setItem('admin_phone', adminPhone);
+            document.getElementById('admin-name-display').textContent = adminName;
+            alert('Profile settings saved!');
+        });
+        
+        // Logout
+        document.getElementById('settings-logout-btn')?.addEventListener('click', () => {
+            if (confirm('Are you sure you want to log out?')) {
+                localStorage.removeItem('userData');
+                localStorage.removeItem('userLoggedIn');
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('adminLoggedIn');
+                window.location.href = 'index.html';
+            }
+        });
+        
+        const adminName = localStorage.getItem('admin_name') || 'Admin';
+        document.getElementById('admin-name-display').textContent = adminName;
+    </script>
+</body>
+</html>

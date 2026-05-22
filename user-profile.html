@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="user.css">
+    <script src="cart-system.js"></script>
+    <title>Jangsu Korean Store - My Account</title>
+    <style>
+        /* Modal Styles */
+        .edit-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .edit-modal.active {
+            display: flex;
+        }
+        .edit-modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            padding: 30px;
+            animation: modalSlideIn 0.3s ease;
+        }
+        @keyframes modalSlideIn {
+            from { transform: translateY(-30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .edit-modal-content h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .edit-modal-content .form-group {
+            margin-bottom: 20px;
+        }
+        .edit-modal-content label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #555;
+        }
+        .edit-modal-content input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .edit-modal-content input:focus {
+            outline: none;
+            border-color: #1f6fd1;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .modal-buttons button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .save-btn {
+            background-color: #1f6fd1;
+            color: white;
+        }
+        .cancel-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .password-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        .password-section h4 {
+            margin-bottom: 15px;
+            color: #555;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <img src="images/logo.png" alt="KStore Logo">
+        </div>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="products.html">Products</a>
+            <a href="about-us.html">About Us</a>
+        </nav>
+        <div class="header-actions">
+            <div class="cart-icon" id="cart-icon">
+                🛒
+                <span class="cart-badge" id="cart-badge">0</span>
+            </div>
+            <a href="user-profile.html" class="profile-icon-link">
+                <svg class="profile-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm-2 9a4 4 0 0 0-4 4v1a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-1a4 4 0 0 0-4-4h-4Z"/>
+                </svg>
+            </a>
+        </div>
+    </header>
+
+    <main class="profile-page">
+        <div class="profile-container-page">
+            <h1 class="profile-title">Account</h1>
+            
+            <div class="profile-tabs">
+                <button class="tab-btn active" data-tab="profile">Profile Details</button>
+                <button class="tab-btn" data-tab="orders">My Orders</button>
+            </div>
+            
+            <!-- Profile Details Tab -->
+            <div id="profile-tab" class="tab-content active">
+                <div class="profile-content">
+                    <div class="profile-header">
+                        <div class="profile-avatar-large">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm-2 9a4 4 0 0 0-4 4v1a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-1a4 4 0 0 0-4-4h-4Z"/>
+                            </svg>
+                        </div>
+                        <div class="profile-avatar-info">
+                            <p class="profile-name-display" id="profile-name-display" style="font-size: 18px; font-weight: 600;">Loading...</p>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-info-section">
+                        <div class="info-group">
+                            <label class="info-label">Username</label>
+                            <div class="info-value" id="profile-username">Loading...</div>
+                        </div>
+                        <div class="info-group">
+                            <label class="info-label">Email Address</label>
+                            <div class="info-value" id="profile-email">Loading...</div>
+                        </div>
+                        <div class="info-group">
+                            <label class="info-label">Phone Number</label>
+                            <div class="info-value" id="profile-phone">Loading...</div>
+                        </div>
+                        <div class="info-group">
+                            <label class="info-label">Member Since</label>
+                            <div class="info-value" id="profile-since">Loading...</div>
+                        </div>
+                    </div>
+                    
+                    <button class="edit-details-btn" id="edit-details-btn">✏️ Edit Details</button>
+                    
+                    <div class="logout-section">
+                        <button class="logout-btn" id="profile-logout-btn">🚪 Logout</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- My Orders Tab -->
+            <div id="orders-tab" class="tab-content">
+                <div class="orders-content">
+                    <div class="orders-search">
+                        <input type="text" id="order-search" placeholder="Search Order by Reference..." class="search-input">
+                        <button class="search-btn" id="search-btn">🔍</button>
+                    </div>
+                    
+                    <div class="orders-table-container">
+                        <table class="orders-table">
+                            <thead>
+                                <tr>
+                                    <th>Order Reference</th>
+                                    <th>Order Placed</th>
+                                    <th>Pickup Schedule</th>
+                                    <th>Total Amount</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orders-table-body">
+                                <tr><td colspan="6" style="text-align: center; padding: 40px;">Loading your orders...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="orders-footer">
+                        <div class="filter-section">
+                            <label>Filter:</label>
+                            <select id="order-filter" class="filter-select">
+                                <option value="all">All Orders</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Confirmed">Confirmed</option>
+                                <option value="Ready for Pickup">Ready for Pickup</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                        <a href="products.html" class="new-order-btn">+ New Order</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Edit Details Modal -->
+    <div id="edit-modal" class="edit-modal">
+        <div class="edit-modal-content">
+            <h3>Edit Profile</h3>
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="edit-email" placeholder="Enter your email">
+            </div>
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input type="tel" id="edit-phone" placeholder="Enter your phone number">
+            </div>
+            <div class="password-section">
+                <h4>Change Password</h4>
+                <div class="form-group">
+                    <label>Current Password</label>
+                    <input type="password" id="current-password" placeholder="Enter current password">
+                </div>
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" id="new-password" placeholder="Enter new password (min 6 characters)">
+                </div>
+                <div class="form-group">
+                    <label>Confirm New Password</label>
+                    <input type="password" id="confirm-password" placeholder="Confirm new password">
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="save-btn" id="save-profile-changes">Save Changes</button>
+                <button class="cancel-btn" id="close-modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="cart-overlay" id="cart-overlay"></div>
+    <div class="cart-sidebar" id="cart-sidebar">
+        <div class="cart-header">
+            <h2>Your Shopping Cart (<span id="cart-count">0</span>)</h2>
+            <button class="close-cart-btn" id="close-cart">×</button>
+        </div>
+        <div class="cart-items-container" id="cart-items-container">
+            <div class="empty-cart" id="empty-cart">
+                <div class="empty-cart-icon">🛒</div>
+                <p>Your cart is empty</p>
+                <p class="empty-cart-hint">Add items to get started</p>
+            </div>
+            <div class="cart-items-list" id="cart-items-list"></div>
+        </div>
+        <div class="cart-footer" id="cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span class="total-amount" id="cart-total">₱0.00</span>
+            </div>
+            <button class="view-order-btn" id="view-order-btn">View Order</button>
+        </div>
+    </div>
+
+    <footer>
+        <a href="#">Contact Us</a>
+        <span class="separator">|</span>
+        <a href="#">Privacy Policy</a>
+        <span class="copyright">© 2026 Jangsu Korean Store</span>
+    </footer>
+
+    <script type="module" src="cart-system.js"></script>
+    <script type="module" src="user-system.js"></script>
+    
+    <!-- Profile Script -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDmgqAxUzxgJqvYLPNoATqA3hBLYla2PR0",
+            authDomain: "jangsukoreanstore-12ba2.firebaseapp.com",
+            projectId: "jangsukoreanstore-12ba2",
+            storageBucket: "jangsukoreanstore-12ba2.firebasestorage.app",
+            messagingSenderId: "935502137643",
+            appId: "1:935502137643:web:454fc81b20e3c1b5ae9d6e"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Get current logged in user
+        let currentUser = JSON.parse(localStorage.getItem('userData') || '{}');
+        let allUsers = JSON.parse(localStorage.getItem('allUsers') || '[]');
+
+        function loadProfileData() {
+            if (currentUser && currentUser.username) {
+                document.getElementById('profile-name-display').textContent = currentUser.name || currentUser.username;
+                document.getElementById('profile-username').textContent = currentUser.username || 'User';
+                document.getElementById('profile-email').textContent = currentUser.email || 'user@example.com';
+                document.getElementById('profile-phone').textContent = currentUser.phone || '+63 XXX XXX XXXX';
+                document.getElementById('profile-since').textContent = currentUser.createdAt ? new Date(currentUser.createdAt).toLocaleDateString() : 'Just joined';
+            } else {
+                document.getElementById('profile-name-display').textContent = 'Guest User';
+                document.getElementById('profile-username').textContent = 'Not logged in';
+                document.getElementById('profile-email').textContent = 'Not logged in';
+                document.getElementById('profile-phone').textContent = 'Not logged in';
+                document.getElementById('profile-since').textContent = 'N/A';
+            }
+        }
+
+        // Load user's orders from Firebase
+        async function loadUserOrders() {
+            const tbody = document.getElementById('orders-table-body');
+            if (!tbody) return;
+            
+            if (!currentUser || !currentUser.username) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px;">Please log in to view your orders</td></tr>';
+                return;
+            }
+            
+            try {
+                const querySnapshot = await getDocs(collection(db, "orders"));
+                const allOrders = [];
+                
+                querySnapshot.forEach((doc) => {
+                    const order = { id: doc.id, ...doc.data() };
+                    if (order.customerUsername === currentUser.username || 
+                        order.customerName === currentUser.username ||
+                        order.customerEmail === currentUser.email) {
+                        allOrders.push(order);
+                    }
+                });
+                
+                allOrders.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
+                
+                const filterValue = document.getElementById('order-filter')?.value || 'all';
+                const searchTerm = document.getElementById('order-search')?.value.toLowerCase() || '';
+                
+                let filteredOrders = allOrders;
+                if (filterValue !== 'all') {
+                    filteredOrders = allOrders.filter(order => order.status === filterValue);
+                }
+                if (searchTerm) {
+                    filteredOrders = filteredOrders.filter(order => 
+                        order.orderNumber?.toLowerCase().includes(searchTerm)
+                    );
+                }
+                
+                if (filteredOrders.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px;">No orders found</td></tr>';
+                    return;
+                }
+                
+                let html = '';
+                for (const order of filteredOrders) {
+                    const orderDate = order.orderDate ? new Date(order.orderDate).toLocaleDateString() : 'N/A';
+                    const pickupDate = order.pickupDateTime || 'To be confirmed';
+                    let statusClass = '';
+                    let statusIcon = '';
+                    
+                    switch(order.status) {
+                        case 'Pending': statusClass = 'status-pending'; statusIcon = '⏳'; break;
+                        case 'Confirmed': statusClass = 'status-confirmed'; statusIcon = '✓'; break;
+                        case 'Ready for Pickup': statusClass = 'status-ready'; statusIcon = '✅'; break;
+                        case 'Completed': statusClass = 'status-completed'; statusIcon = '✔️'; break;
+                        case 'Cancelled': statusClass = 'status-cancelled'; statusIcon = '❌'; break;
+                        default: statusClass = 'status-pending'; statusIcon = '⏳';
+                    }
+                    
+                    // IMPORTANT: Using order.id for the link (not order.reference)
+                    html += `
+                        <tr>
+                            <td>${order.orderNumber || order.id.substring(0, 8)}</td>
+                            <td>${orderDate}</td>
+                            <td>${pickupDate}</td>
+                            <td>₱${(order.total || 0).toFixed(2)}</td>
+                            <td><span class="status-badge ${statusClass}">${statusIcon} ${order.status || 'Pending'}</span></td>
+                            <td><a href="order-detail.html?id=${order.id}" class="view-details-link">View Details</a></td>
+                        </tr>
+                    `;
+                }
+                tbody.innerHTML = html;
+            } catch (error) {
+                console.error("Error loading orders:", error);
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: red;">Error loading orders</td></tr>';
+            }
+        }
+        
+        // Save profile changes
+        function saveProfileChanges() {
+            const newEmail = document.getElementById('edit-email').value;
+            const newPhone = document.getElementById('edit-phone').value;
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            
+            const userIndex = allUsers.findIndex(u => u.username === currentUser.username);
+            
+            if (userIndex === -1) {
+                alert('User not found');
+                return;
+            }
+            
+            if (newPassword || confirmPassword) {
+                if (allUsers[userIndex].password !== currentPassword) {
+                    alert('Current password is incorrect');
+                    return;
+                }
+                if (newPassword !== confirmPassword) {
+                    alert('New passwords do not match');
+                    return;
+                }
+                if (newPassword.length < 6 && newPassword.length > 0) {
+                    alert('New password must be at least 6 characters');
+                    return;
+                }
+            }
+            
+            if (newEmail) allUsers[userIndex].userData.email = newEmail;
+            if (newPhone) allUsers[userIndex].userData.phone = newPhone;
+            if (newPassword) allUsers[userIndex].password = newPassword;
+            
+            if (newEmail) currentUser.email = newEmail;
+            if (newPhone) currentUser.phone = newPhone;
+            
+            localStorage.setItem('allUsers', JSON.stringify(allUsers));
+            localStorage.setItem('userData', JSON.stringify(currentUser));
+            
+            alert('Profile updated successfully!');
+            closeModal();
+            loadProfileData();
+            
+            document.getElementById('current-password').value = '';
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-password').value = '';
+        }
+        
+        // Modal functions
+        const modal = document.getElementById('edit-modal');
+        function openModal() {
+            document.getElementById('edit-email').value = currentUser.email || '';
+            document.getElementById('edit-phone').value = currentUser.phone || '';
+            modal.classList.add('active');
+        }
+        function closeModal() {
+            modal.classList.remove('active');
+        }
+        
+        // Tab switching
+        const tabs = document.querySelectorAll('.tab-btn');
+        const contents = document.querySelectorAll('.tab-content');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.getAttribute('data-tab');
+                tabs.forEach(t => t.classList.remove('active'));
+                contents.forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tabId + '-tab').classList.add('active');
+                if (tabId === 'orders') loadUserOrders();
+            });
+        });
+        
+        // Event listeners
+        document.getElementById('edit-details-btn')?.addEventListener('click', openModal);
+        document.getElementById('close-modal')?.addEventListener('click', closeModal);
+        document.getElementById('save-profile-changes')?.addEventListener('click', saveProfileChanges);
+        document.getElementById('order-filter')?.addEventListener('change', () => loadUserOrders());
+        document.getElementById('search-btn')?.addEventListener('click', () => loadUserOrders());
+        document.getElementById('order-search')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') loadUserOrders();
+        });
+        
+        // Logout
+        document.getElementById('profile-logout-btn')?.addEventListener('click', () => {
+            if (confirm('Are you sure you want to log out?')) {
+                localStorage.removeItem('userData');
+                localStorage.removeItem('userLoggedIn');
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('adminLoggedIn');
+                window.location.href = 'index.html';
+            }
+        });
+        
+        // Close modal when clicking outside
+        modal?.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+        
+        loadProfileData();
+        
+        // Close modal with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('active')) closeModal();
+        });
+    </script>
+</body>
+</html>
