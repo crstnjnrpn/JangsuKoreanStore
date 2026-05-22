@@ -344,7 +344,53 @@ nav a:hover {
         padding-top: 70px;
     }
 }
-
+<style>
+    .stock-status-badge {
+        display: inline-block;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        margin-left: 10px;
+    }
+    .stock-instock {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+    }
+    .stock-lowstock {
+        background-color: #fff3e0;
+        color: #f57c00;
+    }
+    .stock-outofstock {
+        background-color: #ffebee;
+        color: #c62828;
+    }
+    .disabled-button {
+        background-color: #ccc !important;
+        cursor: not-allowed !important;
+        opacity: 0.6;
+    }
+    .disabled-button:hover {
+        transform: none !important;
+        background-color: #ccc !important;
+    }
+    .warning-message {
+        color: #f57c00;
+        font-size: 14px;
+        margin-top: 10px;
+        padding: 10px;
+        background: #fff3e0;
+        border-radius: 8px;
+    }
+    .error-message {
+        color: #c62828;
+        font-size: 14px;
+        margin-top: 10px;
+        padding: 10px;
+        background: #ffebee;
+        border-radius: 8px;
+    }
+</style>
 /* ============================================ */
 /* 5. BUTTONS */
 /* ============================================ */
