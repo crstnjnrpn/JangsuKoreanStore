@@ -5,6 +5,67 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="user.css">
     <title>Jangsu Korean Store - Order Details</title>
+    <style>
+        .stock-status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        .stock-instock {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #a5d6a7;
+        }
+        .stock-lowstock {
+            background-color: #fff3e0;
+            color: #f57c00;
+            border: 1px solid #ffe0b2;
+        }
+        .stock-outofstock {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+        .disabled-button {
+            background-color: #ccc !important;
+            cursor: not-allowed !important;
+            opacity: 0.6;
+        }
+        .disabled-button:hover {
+            transform: none !important;
+            background-color: #ccc !important;
+        }
+        .warning-message {
+            color: #f57c00;
+            font-size: 14px;
+            margin-top: 10px;
+            padding: 10px;
+            background: #fff3e0;
+            border-radius: 8px;
+            border-left: 4px solid #f57c00;
+        }
+        .error-message {
+            color: #c62828;
+            font-size: 14px;
+            margin-top: 10px;
+            padding: 10px;
+            background: #ffebee;
+            border-radius: 8px;
+            border-left: 4px solid #c62828;
+        }
+        .order-product-title {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .order-meta-info .in-stock {
+            font-weight: 600;
+        }
+    </style>
 </head>
 <body>
 
@@ -12,20 +73,18 @@
         <div class="logo">
             <img src="images/logo.png" alt="KStore Logo">
         </div>
-
         <nav>
             <a href="index.html">Home</a>
             <a href="products.html">Products</a>
             <a href="about-us.html">About Us</a>
         </nav>
-
         <div class="header-actions">
             <div class="cart-icon" id="cart-icon">
                 🛒
                 <span class="cart-badge" id="cart-badge">0</span>
             </div>
             <a href="user-profile.html" class="profile-icon-link">
-                <svg class="profile-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <svg class="profile-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                     <path fill-rule="evenodd" clip-rule="evenodd" d="M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm-2 9a4 4 0 0 0-4 4v1a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-1a4 4 0 0 0-4-4h-4Z"/>
                 </svg>
             </a>
@@ -50,7 +109,9 @@
             </div>
             
             <div class="order-details-column">
-                <h1 class="order-product-title" id="order-product-title">Loading...</h1>
+                <h1 class="order-product-title">
+                    <span id="order-product-title">Loading...</span>
+                </h1>
                 <p class="order-product-description" id="order-product-description"></p>
                 
                 <div class="order-price-section">
@@ -62,7 +123,7 @@
                     <label for="quantity" class="quantity-label">Quantity:</label>
                     <div class="quantity-controls">
                         <button class="quantity-btn minus" id="decrease-btn">−</button>
-                        <input type="number" id="quantity" name="quantity" value="1" min="1" max="99" readonly>
+                        <input type="number" id="quantity" name="quantity" value="1" min="1" max="99">
                         <button class="quantity-btn plus" id="increase-btn">+</button>
                     </div>
                 </div>
@@ -74,7 +135,7 @@
                 
                 <div class="order-meta-info">
                     <p><span class="meta-label">Category:</span> <span id="order-product-category"></span></p>
-                    <p><span class="meta-label">Availability:</span> <span class="in-stock" id="order-product-stock">In Stock</span></p>
+                    <p><span class="meta-label">Availability:</span> <span class="in-stock" id="order-product-stock"></span></p>
                 </div>
             </div>
         </div>
@@ -115,8 +176,8 @@
         <span class="copyright">© 2026 Jangsu Korean Store</span>
     </footer>
 
-    <script type="module" src="cart-system.js"></script>
-    <script type="module" src="user-system.js"></script>
+    <script src="cart-system.js"></script>
+    <script src="user-system.js"></script>
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -134,12 +195,30 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        let currentProductData = null;
+
+        // Function to get stock status
+        function getStockStatus(product) {
+            const currentStock = product.currentStock || 0;
+            const reservedStock = product.reservedStock || 0;
+            const availableStock = currentStock - reservedStock;
+            const lowStockThreshold = product.lowStockThreshold || 10;
+            
+            if (availableStock <= 0) {
+                return { status: 'outofstock', text: 'OUT OF STOCK', class: 'stock-outofstock', available: 0 };
+            } else if (availableStock < lowStockThreshold) {
+                return { status: 'lowstock', text: `⚠️ LOW STOCK (Only ${availableStock} left)`, class: 'stock-lowstock', available: availableStock };
+            } else {
+                return { status: 'instock', text: '✓ IN STOCK', class: 'stock-instock', available: availableStock };
+            }
+        }
+
         async function loadProduct() {
             const urlParams = new URLSearchParams(window.location.search);
             const productId = urlParams.get('product');
             
             if (!productId) {
-                document.getElementById('order-product-title').textContent = 'Product not found';
+                document.getElementById('order-product-title').innerHTML = 'Product not found';
                 return;
             }
             
@@ -149,38 +228,151 @@
                 
                 if (productSnap.exists()) {
                     const product = productSnap.data();
+                    const stockInfo = getStockStatus(product);
+                    const isOutOfStock = stockInfo.available === 0;
+                    const isLowStock = stockInfo.status === 'lowstock';
                     
-                    document.getElementById('order-product-title').textContent = product.name || 'Product';
+                    // Save current product data for later use
+                    currentProductData = {
+                        id: productId,
+                        name: product.name,
+                        price: product.price,
+                        image: product.image || 'images/default.jpg',
+                        availableStock: stockInfo.available,
+                        isOutOfStock: isOutOfStock
+                    };
+                    
+                    // Update product title with stock badge
+                    const titleSpan = document.getElementById('order-product-title');
+                    titleSpan.innerHTML = `${escapeHtml(product.name || 'Product')} <span class="stock-status-badge ${stockInfo.class}">${stockInfo.text}</span>`;
+                    
+                    // Update price
                     document.getElementById('order-product-price').textContent = `₱${(product.price || 0).toFixed(2)}`;
+                    
+                    // Update category
                     document.getElementById('order-product-category').textContent = product.category || 'General';
+                    
+                    // Update descriptions
                     document.getElementById('order-product-description').textContent = product.description || `${product.name} - Premium Korean product`;
                     document.getElementById('order-product-full-desc').textContent = product.fullDesc || `Experience the authentic taste of ${product.name}. Perfect for any occasion.`;
                     
-                    const stockStatus = (product.currentStock || 0) > 0 ? 'In Stock' : 'Out of Stock';
+                    // Update stock status message
                     const stockElement = document.getElementById('order-product-stock');
                     if (stockElement) {
-                        stockElement.textContent = stockStatus;
-                        stockElement.style.color = (product.currentStock || 0) > 0 ? '#2e7d32' : '#c62828';
+                        if (isOutOfStock) {
+                            stockElement.innerHTML = '<span style="color: #c62828;">❌ Out of Stock</span>';
+                        } else if (isLowStock) {
+                            stockElement.innerHTML = `<span style="color: #f57c00;">⚠️ Low Stock - Only ${stockInfo.available} left!</span>`;
+                        } else {
+                            stockElement.innerHTML = '<span style="color: #2e7d32;">✓ In Stock</span>';
+                        }
                     }
                     
+                    // Update product image
                     const imageElement = document.getElementById('order-product-image');
                     if (imageElement) {
                         imageElement.src = product.image || 'images/default.jpg';
                         imageElement.alt = product.name;
                     }
                     
-                    window.currentProduct = {
-                        id: productId,
-                        name: product.name,
-                        price: product.price,
-                        image: product.image || 'images/default.jpg'
-                    };
+                    // Get button elements
+                    const addToCartBtn = document.getElementById('add-to-cart-btn');
+                    const buyNowBtn = document.getElementById('buy-now-btn');
+                    const quantityInput = document.getElementById('quantity');
+                    const decreaseBtn = document.getElementById('decrease-btn');
+                    const increaseBtn = document.getElementById('increase-btn');
+                    
+                    // Remove any existing warning/error messages
+                    const existingWarning = document.querySelector('.warning-message');
+                    const existingError = document.querySelector('.error-message');
+                    if (existingWarning) existingWarning.remove();
+                    if (existingError) existingError.remove();
+                    
+                    if (isOutOfStock) {
+                        // Disable buttons for out of stock
+                        if (addToCartBtn) {
+                            addToCartBtn.disabled = true;
+                            addToCartBtn.classList.add('disabled-button');
+                            addToCartBtn.textContent = 'Out of Stock';
+                        }
+                        if (buyNowBtn) {
+                            buyNowBtn.disabled = true;
+                            buyNowBtn.classList.add('disabled-button');
+                            buyNowBtn.textContent = 'Out of Stock';
+                        }
+                        if (quantityInput) quantityInput.disabled = true;
+                        if (decreaseBtn) decreaseBtn.disabled = true;
+                        if (increaseBtn) increaseBtn.disabled = true;
+                        
+                        // Add error message
+                        const actionButtons = document.querySelector('.order-action-buttons');
+                        if (actionButtons) {
+                            const errorDiv = document.createElement('div');
+                            errorDiv.className = 'error-message';
+                            errorDiv.innerHTML = '❌ This product is currently out of stock. Please check back later.';
+                            actionButtons.parentNode.insertBefore(errorDiv, actionButtons.nextSibling);
+                        }
+                    } else if (isLowStock) {
+                        // Enable buttons but add warning
+                        if (addToCartBtn) {
+                            addToCartBtn.disabled = false;
+                            addToCartBtn.classList.remove('disabled-button');
+                            addToCartBtn.textContent = 'Add to Cart';
+                        }
+                        if (buyNowBtn) {
+                            buyNowBtn.disabled = false;
+                            buyNowBtn.classList.remove('disabled-button');
+                            buyNowBtn.textContent = 'Buy Now';
+                        }
+                        if (quantityInput) quantityInput.disabled = false;
+                        if (decreaseBtn) decreaseBtn.disabled = false;
+                        if (increaseBtn) increaseBtn.disabled = false;
+                        
+                        // Add warning message
+                        const actionButtons = document.querySelector('.order-action-buttons');
+                        if (actionButtons) {
+                            const warningDiv = document.createElement('div');
+                            warningDiv.className = 'warning-message';
+                            warningDiv.innerHTML = `⚠️ Only ${stockInfo.available} items left in stock! Order soon before they run out.`;
+                            actionButtons.parentNode.insertBefore(warningDiv, actionButtons.nextSibling);
+                        }
+                    } else {
+                        // Enable all buttons for in stock
+                        if (addToCartBtn) {
+                            addToCartBtn.disabled = false;
+                            addToCartBtn.classList.remove('disabled-button');
+                            addToCartBtn.textContent = 'Add to Cart';
+                        }
+                        if (buyNowBtn) {
+                            buyNowBtn.disabled = false;
+                            buyNowBtn.classList.remove('disabled-button');
+                            buyNowBtn.textContent = 'Buy Now';
+                        }
+                        if (quantityInput) quantityInput.disabled = false;
+                        if (decreaseBtn) decreaseBtn.disabled = false;
+                        if (increaseBtn) increaseBtn.disabled = false;
+                        if (quantityInput) quantityInput.max = stockInfo.available;
+                    }
+                    
+                    // Update quantity input max attribute
+                    if (quantityInput && !isOutOfStock) {
+                        quantityInput.max = Math.min(stockInfo.available, 99);
+                    }
+                    
                 } else {
-                    document.getElementById('order-product-title').textContent = 'Product not found';
+                    document.getElementById('order-product-title').innerHTML = 'Product not found';
                 }
             } catch (error) {
                 console.error("Error loading product:", error);
+                document.getElementById('order-product-title').innerHTML = 'Error loading product';
             }
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
         
         // Quantity controls
@@ -198,36 +390,59 @@
         if (increaseBtn) {
             increaseBtn.addEventListener('click', () => {
                 let val = parseInt(quantityInput.value);
-                if (val < 99) quantityInput.value = val + 1;
-            });
-        }
-        
-        // Add to cart
-        const addToCartBtn = document.getElementById('add-to-cart-btn');
-        if (addToCartBtn) {
-            addToCartBtn.addEventListener('click', () => {
-                if (window.currentProduct) {
-                    const qty = parseInt(quantityInput.value);
-                    window.addToCart(window.currentProduct, qty);
+                const maxStock = currentProductData?.availableStock || 99;
+                if (val < maxStock && val < 99) {
+                    quantityInput.value = val + 1;
+                } else if (val >= maxStock) {
+                    alert(`Only ${maxStock} items available in stock!`);
                 }
             });
         }
         
-        // Buy now
+        // Add to cart with stock check
+        const addToCartBtn = document.getElementById('add-to-cart-btn');
+        if (addToCartBtn) {
+            addToCartBtn.addEventListener('click', () => {
+                if (currentProductData) {
+                    if (currentProductData.isOutOfStock) {
+                        alert('This product is out of stock and cannot be added to cart.');
+                        return;
+                    }
+                    const qty = parseInt(quantityInput.value);
+                    const maxStock = currentProductData.availableStock;
+                    if (qty > maxStock) {
+                        alert(`Only ${maxStock} items available in stock!`);
+                        return;
+                    }
+                    window.addToCart(currentProductData, qty);
+                }
+            });
+        }
+        
+        // Buy now with stock check
         const buyNowBtn = document.getElementById('buy-now-btn');
         if (buyNowBtn) {
             buyNowBtn.addEventListener('click', () => {
-                if (window.currentProduct) {
+                if (currentProductData) {
+                    if (currentProductData.isOutOfStock) {
+                        alert('This product is out of stock and cannot be purchased.');
+                        return;
+                    }
                     const qty = parseInt(quantityInput.value);
+                    const maxStock = currentProductData.availableStock;
+                    if (qty > maxStock) {
+                        alert(`Only ${maxStock} items available in stock!`);
+                        return;
+                    }
                     const checkoutData = {
                         items: [{
-                            id: window.currentProduct.id,
-                            name: window.currentProduct.name,
-                            price: window.currentProduct.price,
+                            id: currentProductData.id,
+                            name: currentProductData.name,
+                            price: currentProductData.price,
                             quantity: qty,
-                            image: window.currentProduct.image
+                            image: currentProductData.image
                         }],
-                        total: window.currentProduct.price * qty
+                        total: currentProductData.price * qty
                     };
                     sessionStorage.setItem('checkoutData', JSON.stringify(checkoutData));
                     window.location.href = 'checkout.html';
@@ -235,6 +450,7 @@
             });
         }
         
+        // Load product
         loadProduct();
     </script>
 </body>
