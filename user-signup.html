@@ -8,15 +8,18 @@
 </head>
 <body>
 
+    <!-- Navigation Bar -->
     <header>
         <div class="logo">
             <img src="images/logo.png" alt="KStore Logo">
         </div>
+
         <nav>
             <a href="index.html">Home</a>
             <a href="products.html">Products</a>
             <a href="about-us.html">About Us</a>
         </nav>
+
         <div class="header-actions">
             <div class="cart-icon" id="cart-icon">
                 🛒
@@ -25,18 +28,24 @@
         </div>
     </header>
 
+    <!-- Sign Up Page Content -->
     <main class="signup-page">
         <div class="signup-container">
+            
             <h1 class="signup-title">Customer Sign Up</h1>
+            
             <div class="login-breadcrumb">
                 <a href="index.html">Home</a>
                 <span class="separator">/</span>
                 <span>Sign Up</span>
             </div>
+            
             <div class="signup-form-container">
+                
                 <h2 class="signup-form-title">Create Account</h2>
                 
                 <form id="signup-form" class="signup-form">
+                    
                     <div class="form-group">
                         <label for="fullname">Full Name (Optional)</label>
                         <input type="text" id="fullname" name="fullname" placeholder="Enter your full name">
@@ -55,12 +64,13 @@
                     <div class="form-group">
                         <label for="phone">Phone Number *</label>
                         <input type="tel" id="phone" name="phone" placeholder="e.g., 09123456789" required>
-                        <small style="color: #666;">Admin will call this number to confirm your order</small>
+                        <small style="color: #666; display: block; margin-top: 5px;">Admin will call this number to confirm your order</small>
                     </div>
                     
                     <div class="form-group">
                         <label for="password">Password *</label>
                         <input type="password" id="password" name="password" placeholder="Create a password (min. 6 characters)" required>
+                        <small style="color: #666; display: block; margin-top: 5px;">Password must be at least 6 characters long</small>
                     </div>
                     
                     <div class="form-group">
@@ -73,8 +83,11 @@
                     <div class="login-link">
                         Already Have An Account? <a href="user-login.html">Log In</a>
                     </div>
+                    
                 </form>
+                
             </div>
+            
         </div>
     </main>
 
@@ -111,70 +124,58 @@
     <script src="cart-system.js"></script>
     <script src="user-system.js"></script>
     
-    <script type="module">
-        import { auth, createUserWithEmailAndPassword, sendEmailVerification } from './firebase-config.js';
-        
-        const signupForm = document.getElementById('signup-form');
-        
-        if (signupForm) {
-            signupForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const fullname = document.getElementById('fullname').value;
-                const email = document.getElementById('email').value;
-                const username = document.getElementById('username').value;
-                const phone = document.getElementById('phone').value;
-                const password = document.getElementById('password').value;
-                const confirmPassword = document.getElementById('confirm_password').value;
-                
-                // Validation
-                if (!email || !username || !phone || !password) {
-                    alert('Please fill in all required fields (*)');
-                    return;
-                }
-                
-                if (password.length < 6) {
-                    alert('Password must be at least 6 characters long');
-                    return;
-                }
-                
-                if (password !== confirmPassword) {
-                    alert('Passwords do not match!');
-                    return;
-                }
-                
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(email)) {
-                    alert('Please enter a valid email address');
-                    return;
-                }
-                
-                const phoneRegex = /^[0-9+\-\s()]{10,15}$/;
-                if (!phoneRegex.test(phone)) {
-                    alert('Please enter a valid phone number (e.g., 09123456789)');
-                    return;
-                }
-                
-                // Check if user already exists in localStorage
-                const existingUsers = JSON.parse(localStorage.getItem('allUsers') || '[]');
-                const userExists = existingUsers.some(function(u) { 
-                    return u.username === username || u.email === email; 
-                });
-                
-                if (userExists) {
-                    alert('Username or email already exists. Please login or use different credentials.');
-                    return;
-                }
-                
-                try {
-                    // 1. Create Firebase Auth user
-                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                    const firebaseUser = userCredential.user;
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const signupForm = document.getElementById('signup-form');
+            
+            if (signupForm) {
+                signupForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
                     
-                    // 2. Send verification email
-                    await sendEmailVerification(firebaseUser);
+                    const fullname = document.getElementById('fullname').value;
+                    const email = document.getElementById('email').value;
+                    const username = document.getElementById('username').value;
+                    const phone = document.getElementById('phone').value;
+                    const password = document.getElementById('password').value;
+                    const confirmPassword = document.getElementById('confirm_password').value;
                     
-                    // 3. Create user data object
+                    if (!email || !username || !phone || !password) {
+                        alert('Please fill in all required fields (*)');
+                        return;
+                    }
+                    
+                    if (password.length < 6) {
+                        alert('Password must be at least 6 characters long');
+                        return;
+                    }
+                    
+                    if (password !== confirmPassword) {
+                        alert('Passwords do not match!');
+                        return;
+                    }
+                    
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(email)) {
+                        alert('Please enter a valid email address');
+                        return;
+                    }
+                    
+                    const phoneRegex = /^[0-9+\-\s()]{10,15}$/;
+                    if (!phoneRegex.test(phone)) {
+                        alert('Please enter a valid phone number (e.g., 09123456789)');
+                        return;
+                    }
+                    
+                    const existingUsers = JSON.parse(localStorage.getItem('allUsers') || '[]');
+                    const userExists = existingUsers.some(function(u) { 
+                        return u.username === username || u.email === email; 
+                    });
+                    
+                    if (userExists) {
+                        alert('Username or email already exists. Please login or use different credentials.');
+                        return;
+                    }
+                    
                     const newUserData = {
                         email: email,
                         username: username,
@@ -182,43 +183,28 @@
                         initials: (fullname ? fullname.substring(0, 2) : username.substring(0, 2)).toUpperCase(),
                         phone: phone,
                         role: 'user',
-                        emailVerified: false,
-                        firebaseUID: firebaseUser.uid,
                         createdAt: new Date().toISOString()
                     };
                     
-                    // 4. Save to localStorage (for backward compatibility)
                     existingUsers.push({
                         username: username,
                         email: email,
                         password: password,
-                        userData: newUserData,
-                        firebaseUID: firebaseUser.uid,
-                        emailVerified: false
+                        userData: newUserData
                     });
                     localStorage.setItem('allUsers', JSON.stringify(existingUsers));
                     
-                    // 5. Save to session for redirect
-                    sessionStorage.setItem('pendingVerificationEmail', email);
-                    sessionStorage.setItem('pendingVerificationUsername', username);
+                    localStorage.setItem('userData', JSON.stringify(newUserData));
+                    localStorage.setItem('userLoggedIn', 'true');
+                    localStorage.setItem('userRole', 'user');
+                    localStorage.removeItem('adminLoggedIn');
                     
-                    // 6. Show success message and redirect to verification page
-                    alert(`✓ Account created! A verification email has been sent to ${email}. Please check your inbox and click the verification link before logging in.`);
+                    alert('✓ Sign up successful! Welcome ' + username + '!');
                     
-                    window.location.href = 'email-verification.html';
-                    
-                } catch (error) {
-                    console.error("Signup error:", error);
-                    if (error.code === 'auth/email-already-in-use') {
-                        alert('This email is already registered. Please login instead.');
-                    } else if (error.code === 'auth/weak-password') {
-                        alert('Password should be at least 6 characters.');
-                    } else {
-                        alert('Error creating account: ' + error.message);
-                    }
-                }
-            });
-        }
+                    window.location.href = 'index.html';
+                });
+            }
+        });
     </script>
 </body>
 </html>
