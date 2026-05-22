@@ -1,5 +1,5 @@
 /**
- * cart-system.js - Complete shopping cart system with Firebase orders
+ * cart-system.js - Complete shopping cart system with quantity limits
  */
 
 console.log('✅ cart-system.js loaded successfully');
@@ -164,12 +164,24 @@ function setupCartListeners() {
     });
 }
 
+// Customer quantity limit - MAX 10 per product
+const MAX_CUSTOMER_QUANTITY = 10;
+
 window.updateQuantity = function(itemId, change) {
     const item = cart.find(item => item.id == itemId);
     if (item) {
-        item.quantity += change;
-        if (item.quantity <= 0) {
+        const newQuantity = item.quantity + change;
+        
+        // Check customer quantity limit (max 10)
+        if (newQuantity > MAX_CUSTOMER_QUANTITY) {
+            alert(`You can only order up to ${MAX_CUSTOMER_QUANTITY} items of this product.`);
+            return;
+        }
+        
+        if (newQuantity <= 0) {
             cart = cart.filter(item => item.id != itemId);
+        } else {
+            item.quantity = newQuantity;
         }
         saveCart();
         updateCartSidebar();
@@ -181,6 +193,85 @@ window.removeFromCart = function(itemId) {
     saveCart();
     alert('Item removed from cart');
     updateCartSidebar();
+};
+
+// Function to check product stock before adding to cart
+async function checkProductStock(productId, requestedQuantity) {
+    try {
+        const { getFirestore, doc, getDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+        const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyDmgqAxUzxgJqvYLPNoATqA3hBLYla2PR0",
+            authDomain: "jangsukoreanstore-12ba2.firebaseapp.com",
+            projectId: "jangsukoreanstore-12ba2",
+            storageBucket: "jangsukoreanstore-12ba2.firebasestorage.app",
+            messagingSenderId: "935502137643",
+            appId: "1:935502137643:web:454fc81b20e3c1b5ae9d6e"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const productRef = doc(db, "products", productId);
+        const productSnap = await getDoc(productRef);
+        
+        if (productSnap.exists()) {
+            const product = productSnap.data();
+            const availableStock = (product.currentStock || 0) - (product.reservedStock || 0);
+            return { available: availableStock, isAvailable: availableStock >= requestedQuantity };
+        }
+        return { available: 0, isAvailable: false };
+    } catch (error) {
+        console.error("Error checking stock:", error);
+        return { available: 0, isAvailable: false };
+    }
+}
+
+// Add to cart with quantity limit and stock check
+window.addToCart = async function(product, quantity = 1) {
+    // Check customer quantity limit (max 10)
+    if (quantity > MAX_CUSTOMER_QUANTITY) {
+        alert(`You can only order up to ${MAX_CUSTOMER_QUANTITY} items of this product.`);
+        return;
+    }
+    
+    // Check stock availability
+    const stockCheck = await checkProductStock(product.id, quantity);
+    
+    if (!stockCheck.isAvailable) {
+        alert(`Sorry, only ${stockCheck.available} items available in stock!`);
+        return;
+    }
+    
+    const existing = cart.find(item => item.id == product.id);
+    if (existing) {
+        const newQuantity = existing.quantity + quantity;
+        
+        // Check if new quantity exceeds customer limit
+        if (newQuantity > MAX_CUSTOMER_QUANTITY) {
+            alert(`You can only order up to ${MAX_CUSTOMER_QUANTITY} items of this product. You already have ${existing.quantity} in cart.`);
+            return;
+        }
+        
+        // Check if new quantity exceeds available stock
+        if (newQuantity > stockCheck.available) {
+            alert(`Sorry, only ${stockCheck.available} items available in stock! You already have ${existing.quantity} in cart.`);
+            return;
+        }
+        
+        existing.quantity = newQuantity;
+    } else {
+        cart.push({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            image: product.image || 'images/default.jpg',
+            quantity: quantity
+        });
+    }
+    saveCart();
+    alert(`Added ${quantity} x ${product.name} to cart!`);
+    openCart();
 };
 
 function loadCheckoutData() {
@@ -343,13 +434,67 @@ function setupCheckoutEventListeners(defaultDate) {
     }
 }
 
+// Function to update product stock after order
+async function updateProductStock(orderItems) {
+    try {
+        const { getFirestore, doc, updateDoc, getDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+        const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyDmgqAxUzxgJqvYLPNoATqA3hBLYla2PR0",
+            authDomain: "jangsukoreanstore-12ba2.firebaseapp.com",
+            projectId: "jangsukoreanstore-12ba2",
+            storageBucket: "jangsukoreanstore-12ba2.firebasestorage.app",
+            messagingSenderId: "935502137643",
+            appId: "1:935502137643:web:454fc81b20e3c1b5ae9d6e"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        for (const item of orderItems) {
+            const productRef = doc(db, "products", item.id);
+            const productSnap = await getDoc(productRef);
+            
+            if (productSnap.exists()) {
+                const product = productSnap.data();
+                const currentStock = product.currentStock || 0;
+                const reservedStock = product.reservedStock || 0;
+                const newCurrentStock = currentStock - item.quantity;
+                const newReservedStock = reservedStock + item.quantity;
+                
+                await updateDoc(productRef, {
+                    currentStock: newCurrentStock,
+                    reservedStock: newReservedStock,
+                    status: newCurrentStock - newReservedStock <= 0 ? 'Inactive' : 'Active',
+                    updatedAt: new Date().toISOString()
+                });
+                
+                console.log(`Stock updated for ${item.name}: ${currentStock} -> ${newCurrentStock}`);
+            }
+        }
+        
+        return true;
+    } catch (error) {
+        console.error("Error updating product stock:", error);
+        return false;
+    }
+}
+
+// Place order with stock deduction
 async function placeOrder(items, subtotal) {
+    const userData = localStorage.getItem('userData');
+    const user = userData ? JSON.parse(userData) : null;
+    
+    if (!user || !user.username) {
+        alert('Please login to place an order.');
+        window.location.href = 'user-login.html';
+        return;
+    }
+    
     const selectedPayment = document.querySelector('input[name="payment"]:checked')?.value || 'Cash On Pickup';
     const date = document.getElementById('pickup-date')?.value || '';
     const time = document.getElementById('pickup-time')?.value || '12:00';
-    
-    const userData = localStorage.getItem('userData');
-    const user = userData ? JSON.parse(userData) : null;
     
     const orderData = {
         items: items,
@@ -362,7 +507,8 @@ async function placeOrder(items, subtotal) {
         customerName: user?.name || user?.username || 'Guest',
         customerEmail: user?.email || 'guest@example.com',
         customerUsername: user?.username || 'guest',
-        customerPhone: user?.phone || 'Not provided'
+        customerPhone: user?.phone || 'Not provided',
+        adminCalled: false
     };
     
     try {
@@ -381,12 +527,21 @@ async function placeOrder(items, subtotal) {
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         
+        // Update product stock
+        const stockUpdated = await updateProductStock(items);
+        
+        if (!stockUpdated) {
+            alert('Warning: Could not update all stock levels. Please check inventory.');
+        }
+        
+        // Save order to Firebase
         await addDoc(collection(db, "orders"), orderData);
         console.log("Order saved to Firebase");
-        alert(`✅ Order placed successfully! Your order number is ${orderData.orderNumber}\n\nAdmin will contact you at ${orderData.customerPhone} for confirmation.`);
+        
+        alert(`✅ Order placed successfully!\n\nOrder Number: ${orderData.orderNumber}\nTotal: ₱${subtotal.toFixed(2)}\n\nStock has been updated.`);
         
     } catch (error) {
-        console.error("Error saving order:", error);
+        console.error("Error placing order:", error);
         alert("Error placing order. Please try again.");
         return;
     }
@@ -461,22 +616,9 @@ function loadOrderConfirmation() {
     if (totalElement) totalElement.innerHTML = `<strong>₱${total.toFixed(2)}</strong>`;
 }
 
-window.addToCart = function(product, quantity = 1) {
-    const existing = cart.find(item => item.id == product.id);
-    if (existing) {
-        existing.quantity += quantity;
-    } else {
-        cart.push({
-            id: product.id,
-            name: product.name,
-            price: product.price,
-            image: product.image || 'images/default.jpg',
-            quantity: quantity
-        });
-    }
-    saveCart();
-    alert(`Added ${quantity} x ${product.name} to cart!`);
-    openCart();
-};
-
 window.getCart = () => cart;
+window.addToCart = addToCart;
+window.updateQuantity = updateQuantity;
+window.removeFromCart = removeFromCart;
+window.openCart = openCart;
+window.closeCart = closeCart;
