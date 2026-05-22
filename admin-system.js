@@ -1,4 +1,4 @@
-// ===== admin-system.js - COMPLETE WITH DASHBOARD FIXES =====
+// ===== admin-system.js - COMPLETE WITH STOCK LIMIT (MAX 50) =====
 console.log("1. admin-system.js starting to load...");
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -22,6 +22,9 @@ const storage = getStorage(app);
 
 console.log("3. Firebase initialized successfully");
 
+// Admin stock quantity limit - MAX 50
+const MAX_ADMIN_STOCK = 50;
+
 // ===== MOBILE HAMBURGER MENU FOR ADMIN =====
 function initAdminMobileMenu() {
     if (document.querySelector('.admin-mobile-menu-toggle')) return;
@@ -32,7 +35,6 @@ function initAdminMobileMenu() {
     const toggleBtn = document.createElement('button');
     toggleBtn.className = 'admin-mobile-menu-toggle';
     toggleBtn.innerHTML = '☰';
-    toggleBtn.setAttribute('aria-label', 'Menu');
     document.body.appendChild(toggleBtn);
     
     const overlay = document.createElement('div');
@@ -116,9 +118,21 @@ function displayAdminName() {
     if (adminNameDisplay) adminNameDisplay.textContent = nameToShow;
 }
 
-// ===== ADD PRODUCT PAGE =====
+// ===== ADD PRODUCT PAGE WITH STOCK LIMIT =====
 function initAddProductPage() {
     console.log("Initializing Add Product Page");
+    
+    const stockInput = document.getElementById('stock-quantity');
+    if (stockInput) {
+        stockInput.max = MAX_ADMIN_STOCK;
+        stockInput.addEventListener('input', function() {
+            let val = parseInt(this.value);
+            if (val > MAX_ADMIN_STOCK) {
+                this.value = MAX_ADMIN_STOCK;
+                alert(`Maximum stock limit is ${MAX_ADMIN_STOCK}`);
+            }
+        });
+    }
     
     const form = document.getElementById('add-product-form');
     if (form) {
@@ -127,7 +141,7 @@ function initAddProductPage() {
             
             const name = document.getElementById('product-name').value.trim();
             const price = document.getElementById('product-price').value;
-            const stock = document.getElementById('stock-quantity').value;
+            let stock = parseInt(document.getElementById('stock-quantity').value);
             const threshold = document.getElementById('low-stock-threshold').value;
             const category = document.getElementById('product-category').value;
             const imageUrl = document.getElementById('product-image-url')?.value.trim() || '';
@@ -142,10 +156,17 @@ function initAddProductPage() {
                 alert("Please enter a valid price");
                 return;
             }
-            if (!stock || parseInt(stock) < 0) {
+            if (isNaN(stock) || stock < 0) {
                 alert("Please enter valid stock quantity");
                 return;
             }
+            
+            // Enforce max stock limit
+            if (stock > MAX_ADMIN_STOCK) {
+                stock = MAX_ADMIN_STOCK;
+                alert(`Stock capped at maximum of ${MAX_ADMIN_STOCK}`);
+            }
+            
             if (!category) {
                 alert("Please select category");
                 return;
@@ -175,9 +196,9 @@ function initAddProductPage() {
                     name: name,
                     price: parseFloat(price),
                     category: category,
-                    currentStock: parseInt(stock),
+                    currentStock: stock,
                     reservedStock: 0,
-                    status: parseInt(stock) > 0 ? 'Active' : 'Inactive',
+                    status: stock > 0 ? 'Active' : 'Inactive',
                     lowStockThreshold: parseInt(threshold) || 5,
                     image: finalImageUrl,
                     description: description,
@@ -279,7 +300,7 @@ window.editProduct = function(productId) {
     window.location.href = `edit-product.html?id=${productId}`;
 };
 
-// ===== EDIT PRODUCT PAGE =====
+// ===== EDIT PRODUCT PAGE WITH STOCK LIMIT =====
 async function initEditProductPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
@@ -322,6 +343,18 @@ async function initEditProductPage() {
         if (descField) descField.value = product.description || '';
         if (fullDescField) fullDescField.value = product.fullDesc || '';
         
+        // Set max attribute for stock input
+        if (stockField) {
+            stockField.max = MAX_ADMIN_STOCK;
+            stockField.addEventListener('input', function() {
+                let val = parseInt(this.value);
+                if (val > MAX_ADMIN_STOCK) {
+                    this.value = MAX_ADMIN_STOCK;
+                    alert(`Maximum stock limit is ${MAX_ADMIN_STOCK}`);
+                }
+            });
+        }
+        
         const statusValue = product.status === 'Active' ? 'Active' : 'Inactive';
         document.querySelectorAll('input[name="status"]').forEach(radio => {
             if (radio.value === statusValue) radio.checked = true;
@@ -341,7 +374,7 @@ async function initEditProductPage() {
                 
                 const name = nameField.value.trim();
                 const price = parseFloat(priceField.value);
-                const stock = parseInt(stockField.value);
+                let stock = parseInt(stockField.value);
                 const reserved = parseInt(reservedField.value) || 0;
                 const threshold = parseInt(thresholdField.value);
                 const category = categoryField.value;
@@ -352,6 +385,12 @@ async function initEditProductPage() {
                 if (!name || isNaN(price) || isNaN(stock) || !category) {
                     alert("Please fill all required fields");
                     return;
+                }
+                
+                // Enforce max stock limit
+                if (stock > MAX_ADMIN_STOCK) {
+                    stock = MAX_ADMIN_STOCK;
+                    alert(`Stock capped at maximum of ${MAX_ADMIN_STOCK}`);
                 }
                 
                 let finalImageUrl = imageUrl;
@@ -475,7 +514,6 @@ async function loadDashboardData() {
     console.log("Loading dashboard data...");
     
     try {
-        // Load orders
         const ordersSnapshot = await getDocs(collection(db, "orders"));
         const orders = [];
         ordersSnapshot.forEach((doc) => {
@@ -483,13 +521,11 @@ async function loadDashboardData() {
         });
         console.log("Orders loaded:", orders.length);
         
-        // Calculate stats
         const totalOrders = orders.length;
         const pendingOrders = orders.filter(o => o.status === 'Pending').length;
         const readyOrders = orders.filter(o => o.status === 'Ready for Pickup').length;
         const completedOrders = orders.filter(o => o.status === 'Completed').length;
         
-        // Today's orders and revenue
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         
@@ -502,7 +538,6 @@ async function loadDashboardData() {
         
         const todayRevenue = todayOrders.reduce((sum, o) => sum + (o.total || 0), 0);
         
-        // Update DOM elements
         const totalOrdersEl = document.getElementById('total-orders');
         const pendingOrdersEl = document.getElementById('pending-orders');
         const readyOrdersEl = document.getElementById('ready-orders');
@@ -516,7 +551,6 @@ async function loadDashboardData() {
         if (completedOrdersEl) completedOrdersEl.textContent = completedOrders;
         if (todayRevenueEl) todayRevenueEl.innerHTML = `₱${todayRevenue.toFixed(2)}`;
         
-        // Load products for low stock
         const productsSnapshot = await getDocs(collection(db, "products"));
         const products = [];
         productsSnapshot.forEach((doc) => {
@@ -532,7 +566,6 @@ async function loadDashboardData() {
         
         if (lowStockCountEl) lowStockCountEl.textContent = lowStockProducts.length;
         
-        // Display low stock products
         const lowStockContainer = document.getElementById('low-stock-list');
         if (lowStockContainer) {
             if (lowStockProducts.length === 0) {
@@ -552,7 +585,6 @@ async function loadDashboardData() {
             }
         }
         
-        // Display today's orders
         const todayOrdersContainer = document.getElementById('today-orders-list');
         if (todayOrdersContainer) {
             if (todayOrders.length === 0) {
@@ -588,14 +620,6 @@ async function loadDashboardData() {
         
     } catch (error) {
         console.error("Error loading dashboard:", error);
-        const lowStockContainer = document.getElementById('low-stock-list');
-        if (lowStockContainer) {
-            lowStockContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: red;">Error loading data</div>';
-        }
-        const todayOrdersContainer = document.getElementById('today-orders-list');
-        if (todayOrdersContainer) {
-            todayOrdersContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: red;">Error loading data</div>';
-        }
     }
 }
 
@@ -669,7 +693,7 @@ async function loadInventory() {
                     </div>
                     <div class="inventory-field">
                         <label class="inventory-label">Total Stock</label>
-                        <div class="inventory-value">${currentStock} units</div>
+                        <div class="inventory-value">${currentStock} / ${MAX_ADMIN_STOCK}</div>
                     </div>
                     <div class="inventory-field">
                         <label class="inventory-label">Reserved Stock</label>
@@ -687,6 +711,10 @@ async function loadInventory() {
                             </span>
                         </div>
                     </div>
+                    <div class="inventory-field">
+                        <label class="inventory-label">Max Capacity</label>
+                        <div class="inventory-value">${MAX_ADMIN_STOCK} units</div>
+                    </div>
                 </div>
             `;
         }
@@ -703,13 +731,9 @@ async function loadInventory() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log("DOM loaded");
     
-    // Display admin name
     displayAdminName();
-    
-    // Initialize mobile menu for admin
     initAdminMobileMenu();
     
-    // Initialize based on page
     if (document.getElementById('add-product-form')) {
         initAddProductPage();
     }
@@ -724,16 +748,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     else if (document.getElementById('stats-grid') || document.getElementById('total-orders')) {
         loadDashboardData();
-        // Auto refresh every 30 seconds
         setInterval(loadDashboardData, 30000);
     }
     else if (document.getElementById('inventory-list')) {
         loadInventory();
-        // Auto refresh every 30 seconds
         setInterval(loadInventory, 30000);
     }
     
-    // Desktop sidebar logout button
     const sidebarLogoutBtn = document.getElementById('admin-sidebar-logout');
     if (sidebarLogoutBtn) {
         sidebarLogoutBtn.addEventListener('click', (e) => {
