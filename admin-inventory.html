@@ -5,6 +5,120 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="admin.css">
     <title>Jangsu Korean Store - Admin Inventory</title>
+    <style>
+        .inventory-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-box {
+            background: linear-gradient(135deg, #1f6fd1, #155ab3);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .stat-box h3 {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+        .stat-box .number {
+            font-size: 32px;
+            font-weight: 700;
+        }
+        .inventory-container {
+            background-color: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 1px solid #ecf0f1;
+            margin-bottom: 30px;
+        }
+        .inventory-main-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #1f6fd1;
+        }
+        .inventory-card {
+            background-color: #f8fafc;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s;
+        }
+        .inventory-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: #1f6fd1;
+        }
+        .inventory-field {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .inventory-field:last-child {
+            border-bottom: none;
+        }
+        .inventory-label {
+            width: 140px;
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .inventory-value {
+            flex: 1;
+            color: #2d3748;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-badge.active {
+            background-color: #e0f2e9;
+            color: #1e6f3f;
+        }
+        .status-badge.pending {
+            background-color: #fff3e0;
+            color: #f57c00;
+        }
+        .status-badge.inactive {
+            background-color: #ffe6e5;
+            color: #c62828;
+        }
+        .low-stock-warning {
+            background: #fff3e0;
+            border-left: 4px solid #f39c12;
+        }
+        .out-stock-warning {
+            background: #ffebee;
+            border-left: 4px solid #e74c3c;
+        }
+        .in-stock {
+            background: #e8f5e9;
+            border-left: 4px solid #2ecc71;
+        }
+        .available-stock {
+            font-weight: 700;
+            color: #2ecc71;
+        }
+        .reserved-stock {
+            font-weight: 700;
+            color: #f39c12;
+        }
+    </style>
 </head>
 <body>
     <div class="admin-container">
@@ -19,6 +133,7 @@
                     <a href="admin-order.html" class="nav-item">Orders</a>
                     <a href="admin-product.html" class="nav-item">Products</a>
                     <a href="admin-inventory.html" class="nav-item active">Inventory</a>
+                    <a href="admin-report.html" class="nav-item">Reports</a>
                 </div>
                 <div class="nav-section">
                     <a href="admin-settings.html" class="nav-item">
@@ -42,7 +157,7 @@
                 </div>
             </div>
             
-            <div class="inventory-stats">
+            <div class="inventory-stats" id="inventory-stats">
                 <div class="stat-box">
                     <h3>Total Products</h3>
                     <div class="number" id="total-products">0</div>
@@ -63,6 +178,176 @@
         </main>
     </div>
 
-    <script type="module" src="admin-system.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDmgqAxUzxgJqvYLPNoATqA3hBLYla2PR0",
+            authDomain: "jangsukoreanstore-12ba2.firebaseapp.com",
+            projectId: "jangsukoreanstore-12ba2",
+            storageBucket: "jangsukoreanstore-12ba2.firebasestorage.app",
+            messagingSenderId: "935502137643",
+            appId: "1:935502137643:web:454fc81b20e3c1b5ae9d6e"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Low stock threshold
+        const LOW_STOCK_THRESHOLD = 10;
+
+        async function loadInventory() {
+            const container = document.getElementById('inventory-list');
+            if (!container) return;
+            
+            try {
+                const querySnapshot = await getDocs(collection(db, "products"));
+                const products = [];
+                querySnapshot.forEach((doc) => {
+                    products.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Calculate statistics
+                const totalProducts = products.length;
+                const totalValue = products.reduce((sum, p) => sum + ((p.currentStock || 0) * (p.price || 0)), 0);
+                
+                // Calculate low stock items based on AVAILABLE stock (current - reserved)
+                const lowStockItems = products.filter(p => {
+                    const currentStock = p.currentStock || 0;
+                    const reservedStock = p.reservedStock || 0;
+                    const availableStock = currentStock - reservedStock;
+                    return availableStock < LOW_STOCK_THRESHOLD && availableStock > 0 && p.status === 'Active';
+                }).length;
+                
+                // Update stats display
+                document.getElementById('total-products').textContent = totalProducts;
+                document.getElementById('total-value').innerHTML = `₱${totalValue.toFixed(2)}`;
+                document.getElementById('low-stock-total').textContent = lowStockItems;
+                
+                if (products.length === 0) {
+                    container.innerHTML = '<div style="text-align: center; padding: 50px;">No products found.</div>';
+                    return;
+                }
+                
+                let html = '<h1 class="inventory-main-title">Product Inventory</h1>';
+                
+                for (const product of products) {
+                    const currentStock = product.currentStock || 0;
+                    const reservedStock = product.reservedStock || 0;
+                    const availableStock = currentStock - reservedStock;
+                    const threshold = product.lowStockThreshold || LOW_STOCK_THRESHOLD;
+                    
+                    // Determine stock status
+                    let stockStatus = '';
+                    let statusClass = '';
+                    
+                    if (availableStock <= 0) {
+                        stockStatus = 'OUT OF STOCK';
+                        statusClass = 'out-stock-warning';
+                    } else if (availableStock < threshold) {
+                        stockStatus = 'LOW STOCK';
+                        statusClass = 'low-stock-warning';
+                    } else {
+                        stockStatus = 'IN STOCK';
+                        statusClass = 'in-stock';
+                    }
+                    
+                    // Determine badge color
+                    let badgeClass = '';
+                    if (availableStock <= 0) {
+                        badgeClass = 'inactive';
+                    } else if (availableStock < threshold) {
+                        badgeClass = 'pending';
+                    } else {
+                        badgeClass = 'active';
+                    }
+                    
+                    html += `
+                        <div class="inventory-card ${statusClass}">
+                            <div class="inventory-field">
+                                <label class="inventory-label">Product Name</label>
+                                <div class="inventory-value"><strong>${escapeHtml(product.name)}</strong></div>
+                            </div>
+                            <div class="inventory-field">
+                                <label class="inventory-label">Category</label>
+                                <div class="inventory-value">${escapeHtml(product.category || 'Uncategorized')}</div>
+                            </div>
+                            <div class="inventory-field">
+                                <label class="inventory-label">Price</label>
+                                <div class="inventory-value">₱${(product.price || 0).toFixed(2)}</div>
+                            </div>
+                            <div class="inventory-field">
+                                <label class="inventory-label">Total Stock</label>
+                                <div class="inventory-value">${currentStock} units</div>
+                            </div>
+                            <div class="inventory-field">
+                                <label class="inventory-label">Reserved Stock</label>
+                                <div class="inventory-value reserved-stock">${reservedStock} units</div>
+                            </div>
+                            <div class="inventory-field">
+                                <label class="inventory-label">Available Stock</label>
+                                <div class="inventory-value available-stock">${availableStock} units</div>
+                            </div>
+                            <div class="inventory-field">
+                                <label class="inventory-label">Low Stock Threshold</label>
+                                <div class="inventory-value">${threshold} units</div>
+                            </div>
+                            <div class="inventory-field">
+                                <label class="inventory-label">Stock Status</label>
+                                <div class="inventory-value">
+                                    <span class="status-badge ${badgeClass}">
+                                        ${stockStatus}
+                                    </span>
+                                    ${availableStock < threshold && availableStock > 0 ? `<span style="margin-left: 10px; color: #f39c12; font-size: 12px;">⚠️ Below threshold (${threshold})</span>` : ''}
+                                    ${availableStock <= 0 ? `<span style="margin-left: 10px; color: #c62828; font-size: 12px;">❌ Not available for order</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="inventory-field">
+                                <label class="inventory-label">Last Updated</label>
+                                <div class="inventory-value">${product.updatedAt ? new Date(product.updatedAt).toLocaleString() : 'N/A'}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                container.innerHTML = html;
+                
+            } catch (error) {
+                console.error("Error loading inventory:", error);
+                container.innerHTML = '<div style="text-align: center; padding: 50px; color: red;">Error loading inventory</div>';
+            }
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Admin name
+        const userData = localStorage.getItem('userData');
+        const adminUser = userData ? JSON.parse(userData) : null;
+        if (adminUser) document.getElementById('admin-name').textContent = adminUser.name || adminUser.username || 'Admin';
+        
+        // Logout
+        document.getElementById('admin-sidebar-logout')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (confirm('Are you sure you want to log out?')) {
+                localStorage.removeItem('userData');
+                localStorage.removeItem('userLoggedIn');
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('adminLoggedIn');
+                window.location.href = 'index.html';
+            }
+        });
+        
+        // Load inventory
+        loadInventory();
+        
+        // Auto refresh every 30 seconds
+        setInterval(loadInventory, 30000);
+    </script>
 </body>
 </html>
