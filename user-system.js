@@ -1,5 +1,5 @@
 /**
- * user-system.js - Complete with working phone number
+ * user-system.js - Complete with login check for checkout
  */
 
 // ===== SAMPLE ORDER DATA =====
@@ -49,11 +49,33 @@ document.addEventListener('DOMContentLoaded', function() {
     if (path.includes('index.html') || path === '/' || path.endsWith('/')) {
         renderBestSellers();
     }
+    if (path.includes('checkout.html')) {
+        // Check login before allowing checkout
+        if (!isLoggedIn) {
+            redirectToLogin('Please log in to checkout');
+        }
+    }
     
     initProfileDropdown(isLoggedIn);
     updateProfileIcon();
     initProtectedActions();
 });
+
+// ===== LOGIN CHECK FUNCTION FOR CHECKOUT =====
+window.checkUserLoggedIn = function() {
+    const isLoggedIn = isUserLoggedIn();
+    const userData = getCurrentUser();
+    
+    if (!isLoggedIn || !userData) {
+        redirectToLogin('Please login or sign up to place an order.');
+        return false;
+    }
+    return true;
+};
+
+window.getCurrentUserForOrder = function() {
+    return getCurrentUser();
+};
 
 // ===== MOBILE HAMBURGER MENU =====
 function initCustomerMobileMenu() {
@@ -494,7 +516,7 @@ function loadOrdersTable(filter) {
     }
     
     if (filteredOrders.length === 0) {
-        html = '<tr><td colspan="5" class="no-orders">No orders found</td></tr>';
+        html = '<tr><td colspan="5" class="no-orders">No orders found<\/td><\/tr>';
     }
     tbody.innerHTML = html;
 }
@@ -541,7 +563,7 @@ function filterAndSearchOrders(filter, searchTerm) {
         html += '</tr>';
     }
     if (filteredOrders.length === 0) {
-        html = '<tr><td colspan="5" class="no-orders">No orders found</td></tr>';
+        html = '<tr><td colspan="5" class="no-orders">No orders found<\/td><\/tr>';
     }
     tbody.innerHTML = html;
 }
@@ -653,6 +675,19 @@ function initProtectedActions() {
             if (!isUserLoggedIn()) {
                 e.preventDefault();
                 redirectToLogin('Please log in or sign up to proceed to checkout');
+                return false;
+            }
+            return true;
+        });
+    }
+    
+    // Add checkout button protection
+    var placeOrderBtn = document.getElementById('place-order-btn');
+    if (placeOrderBtn) {
+        placeOrderBtn.addEventListener('click', function(e) {
+            if (!isUserLoggedIn()) {
+                e.preventDefault();
+                redirectToLogin('Please log in or sign up to place your order');
                 return false;
             }
             return true;
@@ -849,3 +884,5 @@ window.addToCartFromProducts = addToCartFromProducts;
 window.updateCartBadge = updateCartBadge;
 window.logoutUser = logoutUser;
 window.clearUserData = clearUserData;
+window.checkUserLoggedIn = checkUserLoggedIn;
+window.getCurrentUserForOrder = getCurrentUserForOrder;
