@@ -5,35 +5,65 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="user.css">
     <title>Jangsu Korean Store - Products</title>
+    <style>
+        /* Stock Status Badge Styles */
+        .stock-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+        .stock-instock {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #a5d6a7;
+        }
+        .stock-lowstock {
+            background-color: #fff3e0;
+            color: #f57c00;
+            border: 1px solid #ffe0b2;
+        }
+        .stock-outofstock {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+        .product-card {
+            position: relative;
+        }
+        .stock-status-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+    </style>
 </head>
 <body>
 
-    <!-- Navigation Bar -->
     <header>
         <div class="logo">
             <img src="images/logo.png" alt="KStore Logo">
         </div>
-
         <nav>
             <a href="index.html">Home</a>
             <a href="products.html">Products</a>
             <a href="about-us.html">About Us</a>
         </nav>
-
         <div class="header-actions">
             <div class="cart-icon" id="cart-icon">
                 🛒
                 <span class="cart-badge" id="cart-badge">0</span>
             </div>
             <a href="user-profile.html" class="profile-icon-link">
-                <svg class="profile-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <svg class="profile-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                     <path fill-rule="evenodd" clip-rule="evenodd" d="M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm-2 9a4 4 0 0 0-4 4v1a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-1a4 4 0 0 0-4-4h-4Z"/>
                 </svg>
             </a>
         </div>
     </header>
 
-    <!-- Category Filter Section -->
     <section class="product-filter">
         <div class="filter-container">
             <span class="filter-label">Category:</span>
@@ -52,14 +82,12 @@
         </div>
     </section>
 
-    <!-- Products Grid Section -->
     <section class="products-section">
         <div class="products-container" id="products-container">
-            <div style="text-align: center; padding: 50px;">Loading products from database...</div>
+            <div style="text-align: center; padding: 50px;">Loading products...</div>
         </div>
     </section>
 
-    <!-- Footer -->
     <footer>
         <a href="https://www.facebook.com/profile.php?id=61563538805687">Visit our Facebook Page</a>
         <span class="separator">|</span>
@@ -67,7 +95,6 @@
         <span class="copyright">© 2026 Jangsu Korean Store</span>
     </footer>
 
-    <!-- Cart Sidebar -->
     <div class="cart-overlay" id="cart-overlay"></div>
     <div class="cart-sidebar" id="cart-sidebar">
         <div class="cart-header">
@@ -91,10 +118,9 @@
         </div>
     </div>
 
-    <script type="module" src="cart-system.js"></script>
-    <script type="module" src="user-system.js"></script>
+    <script src="cart-system.js"></script>
+    <script src="user-system.js"></script>
     
-    <!-- Firebase Products Loader -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -113,6 +139,22 @@
 
         let allProducts = [];
 
+        // Function to determine stock status
+        function getStockStatus(product) {
+            const currentStock = product.currentStock || 0;
+            const reservedStock = product.reservedStock || 0;
+            const availableStock = currentStock - reservedStock;
+            const lowStockThreshold = product.lowStockThreshold || 10;
+            
+            if (availableStock <= 0) {
+                return { status: 'outofstock', text: 'OUT OF STOCK', class: 'stock-outofstock' };
+            } else if (availableStock < lowStockThreshold) {
+                return { status: 'lowstock', text: '⚠️ LOW STOCK', class: 'stock-lowstock' };
+            } else {
+                return { status: 'instock', text: '✓ IN STOCK', class: 'stock-instock' };
+            }
+        }
+
         async function loadProductsFromFirebase() {
             const container = document.getElementById('products-container');
             if (!container) return;
@@ -126,37 +168,18 @@
                     allProducts.push({ id: doc.id, ...doc.data() });
                 });
                 
-                console.log("Products loaded from Firebase:", allProducts.length);
+                console.log("Products loaded:", allProducts.length);
                 
-                // Get category from URL parameter
-                const urlParams = new URLSearchParams(window.location.search);
-                const categoryParam = urlParams.get('category');
-                
-                // Get category from dropdown
                 const categorySelect = document.getElementById('category');
-                let selectedCategory = categorySelect ? categorySelect.value : 'all';
+                const selectedCategory = categorySelect ? categorySelect.value : 'all';
                 
-                // If URL has category parameter, override dropdown and select it
-                if (categoryParam) {
-                    selectedCategory = categoryParam;
-                    if (categorySelect) {
-                        categorySelect.value = categoryParam;
-                    }
-                    // Update URL without reloading the page
-                    const newUrl = window.location.pathname + '?category=' + categoryParam;
-                    window.history.pushState({}, '', newUrl);
-                }
-                
-                // Filter products
                 let filteredProducts = allProducts;
                 if (selectedCategory !== 'all') {
                     filteredProducts = allProducts.filter(p => p.category === selectedCategory);
                 }
                 
-                console.log("Filtered products:", filteredProducts.length, "Category:", selectedCategory);
-                
                 if (filteredProducts.length === 0) {
-                    container.innerHTML = `<div style="text-align: center; padding: 50px;">No products found in "${selectedCategory}" category. Add some products in the admin panel.</div>`;
+                    container.innerHTML = '<div style="text-align: center; padding: 50px;">No products found in this category.</div>';
                     return;
                 }
                 
@@ -166,12 +189,20 @@
                     if (product.status !== 'Active') continue;
                     
                     const imageUrl = product.image || 'images/default.jpg';
+                    const stockInfo = getStockStatus(product);
+                    const availableStock = (product.currentStock || 0) - (product.reservedStock || 0);
+                    const isOutOfStock = availableStock <= 0;
+                    
                     html += `
-                        <div class="product-card" onclick="location.href='order.html?product=${product.id}'">
+                        <div class="product-card" onclick="location.href='order.html?product=${product.id}'" style="opacity: ${isOutOfStock ? '0.6' : '1'};">
+                            <div class="stock-status-container">
+                                <span class="stock-badge ${stockInfo.class}">${stockInfo.text}</span>
+                            </div>
                             <img src="${imageUrl}" alt="${product.name}" onerror="this.src='images/default.jpg'">
                             <h3>${escapeHtml(product.name)}</h3>
                             <p class="price">₱${(product.price || 0).toFixed(2)}</p>
-                            <button class="btn-small view-product" onclick="event.stopPropagation(); location.href='order.html?product=${product.id}'">View Product</button>
+                            ${isOutOfStock ? '<p style="color: #c62828; font-size: 12px; margin-top: -10px;">Not available for order</p>' : ''}
+                            <button class="btn-small view-product" onclick="event.stopPropagation(); location.href='order.html?product=${product.id}'" ${isOutOfStock ? 'disabled style="background: #ccc; cursor: not-allowed;"' : ''}>${isOutOfStock ? 'Out of Stock' : 'View Product'}</button>
                         </div>
                     `;
                 }
@@ -179,7 +210,7 @@
                 
             } catch (error) {
                 console.error("Error loading products:", error);
-                container.innerHTML = '<div style="text-align: center; padding: 50px; color: red;">Error loading products. Please try again later.</div>';
+                container.innerHTML = '<div style="text-align: center; padding: 50px; color: red;">Error loading products</div>';
             }
         }
 
@@ -190,35 +221,17 @@
             return div.innerHTML;
         }
 
-        // Handle dropdown change
-        function handleCategoryChange() {
-            const categorySelect = document.getElementById('category');
-            const selectedCategory = categorySelect.value;
-            
-            // Update URL with new category
-            let newUrl = window.location.pathname;
-            if (selectedCategory !== 'all') {
-                newUrl += '?category=' + encodeURIComponent(selectedCategory);
-            }
-            window.history.pushState({}, '', newUrl);
-            
-            // Reload products with new filter
-            loadProductsFromFirebase();
-        }
-        
         // Load products on page load
-        await loadProductsFromFirebase();
+        loadProductsFromFirebase();
         
-        // Add event listener for dropdown
+        // Filter change listener
         const categorySelect = document.getElementById('category');
         if (categorySelect) {
-            categorySelect.addEventListener('change', handleCategoryChange);
+            categorySelect.addEventListener('change', loadProductsFromFirebase);
         }
         
-        // Listen for browser back/forward buttons
-        window.addEventListener('popstate', function() {
-            loadProductsFromFirebase();
-        });
+        // Make function global for refresh
+        window.refreshProducts = loadProductsFromFirebase;
     </script>
 </body>
 </html>
