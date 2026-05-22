@@ -6,21 +6,6 @@
     <link rel="stylesheet" href="admin.css">
     <title>Jangsu Korean Store - Admin Orders</title>
     <style>
-        .call-btn {
-            background-color: #25D366;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 11px;
-            margin: 2px;
-            text-decoration: none;
-            display: inline-block;
-        }
-        .call-btn:hover {
-            background-color: #128C7E;
-        }
         .called-btn {
             background-color: #6c757d;
             color: white;
@@ -42,9 +27,6 @@
         }
         .called-btn.called:hover {
             background-color: #218838;
-        }
-        .whatsapp-btn {
-            background-color: #25D366;
         }
         .delete-order-btn {
             background-color: #dc3545;
@@ -359,7 +341,6 @@
                 for (const order of filteredOrders) {
                     const orderDate = order.orderDate ? new Date(order.orderDate).toLocaleDateString() : 'N/A';
                     const customerPhone = order.customerPhone || 'Not provided';
-                    const cleanPhone = customerPhone.replace(/[^0-9]/g, '');
                     const customerName = order.customerName || order.customerUsername || 'Guest';
                     const customerEmail = order.customerEmail || '';
                     const isCalled = order.adminCalled === true;
@@ -383,12 +364,6 @@
                             </td>
                             <td>
                                 <span class="phone-number">${escapeHtml(customerPhone)}</span>
-                                ${customerPhone !== 'Not provided' && customerPhone !== '+63 XXX XXX XXXX' ? `
-                                    <div class="action-buttons" style="margin-top: 5px;">
-                                        <a href="tel:${customerPhone}" class="call-btn" title="Call Customer">📞 Call</a>
-                                        <a href="https://wa.me/${cleanPhone}" target="_blank" class="call-btn whatsapp-btn" title="WhatsApp">💬 WhatsApp</a>
-                                    </div>
-                                ` : ''}
                             </td>
                             <td>${orderDate}</td>
                             <td><strong>₱${(order.total || 0).toFixed(2)}</strong></td>
