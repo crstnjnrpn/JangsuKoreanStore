@@ -8,20 +8,16 @@
 </head>
 <body>
 
-    <!-- Navigation Bar -->
     <header>
         <div class="logo">
             <img src="images/logo.png" alt="KStore Logo">
         </div>
-
         <nav>
             <a href="index.html">Home</a>
             <a href="products.html">Products</a>
             <a href="about-us.html">About Us</a>
         </nav>
-
         <div class="header-actions">
-            <!-- Cart Icon with Badge -->
             <div class="cart-icon" id="cart-icon">
                 🛒
                 <span class="cart-badge" id="cart-badge">0</span>
@@ -29,55 +25,42 @@
         </div>
     </header>
 
-    <!-- Login Page Content -->
     <main class="login-page">
         <div class="login-container">
-            
-            <!-- Page Title -->
             <h1 class="login-title">Login</h1>
-            
-            <!-- Breadcrumb -->
             <div class="login-breadcrumb">
                 <a href="index.html">Home</a>
                 <span class="separator">/</span>
                 <span>Login</span>
             </div>
-            
-            <!-- Login Form -->
             <div class="login-form-container">
-                
                 <h2 class="login-form-title">Welcome Back!</h2>
                 
                 <form id="login-form" class="login-form">
-                    
-                    <!-- Username Field -->
                     <div class="form-group">
-                        <label for="username">Username or Email</label>
-                        <input type="text" id="username" name="username" placeholder="Enter your username or email" required>
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" placeholder="Enter your email" required>
                     </div>
                     
-                    <!-- Password Field -->
                     <div class="form-group">
                         <label for="password">Password</label>
                         <input type="password" id="password" name="password" placeholder="Enter your password" required>
                     </div>
                     
-                    <!-- Sign In Button -->
                     <button type="submit" class="login-btn">Sign In</button>
                     
-                    <!-- Sign Up Link -->
                     <div class="signup-link">
                         Don't Have An Account? <a href="user-signup.html">Sign Up</a>
                     </div>
                     
+                    <div style="margin-top: 20px; padding: 15px; background-color: #f5f5f5; border-radius: 8px; text-align: center;">
+                        <p style="font-size: 12px; color: #666;">Admin: any username + password containing "adminjangsu"</p>
+                    </div>
                 </form>
-                
             </div>
-            
         </div>
     </main>
 
-    <!-- Cart Sidebar Component -->
     <div class="cart-overlay" id="cart-overlay"></div>
     <div class="cart-sidebar" id="cart-sidebar">
         <div class="cart-header">
@@ -101,7 +84,6 @@
         </div>
     </div>
 
-    <!-- Footer -->
     <footer>
         <a href="#">Contact Us</a>
         <span class="separator">|</span>
@@ -109,70 +91,73 @@
         <span class="copyright">© 2026 Jangsu Korean Store</span>
     </footer>
 
-    <script type="module" src="cart-system.js"></script>
-    <script type="module" src="user-system.js"></script>
+    <script src="cart-system.js"></script>
+    <script src="user-system.js"></script>
     
-    <!-- Login Form Script -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Clear any existing session when on login page
-            localStorage.removeItem('userData');
-            localStorage.removeItem('userLoggedIn');
-            localStorage.removeItem('userRole');
-            localStorage.removeItem('adminLoggedIn');
-            console.log("Login page loaded - session cleared");
-            
-            const loginForm = document.getElementById('login-form');
-            
-            if (loginForm) {
-                loginForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
+    <script type="module">
+        import { auth, signInWithEmailAndPassword } from './firebase-config.js';
+        
+        // Clear any existing session when on login page
+        localStorage.removeItem('userData');
+        localStorage.removeItem('userLoggedIn');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('adminLoggedIn');
+        
+        const loginForm = document.getElementById('login-form');
+        
+        if (loginForm) {
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const username = email.split('@')[0]; // Extract username from email
+                
+                if (!email || !password) {
+                    alert('Please enter both email and password');
+                    return;
+                }
+                
+                // Admin login check (kept same as before)
+                if (password.toLowerCase().includes('adminjangsu')) {
+                    const adminData = {
+                        username: username,
+                        name: username,
+                        initials: username.substring(0, 2).toUpperCase(),
+                        email: email,
+                        phone: '+63 XXX XXX XXXX',
+                        role: 'admin'
+                    };
+                    localStorage.setItem('userData', JSON.stringify(adminData));
+                    localStorage.setItem('userLoggedIn', 'true');
+                    localStorage.setItem('userRole', 'admin');
+                    localStorage.setItem('adminLoggedIn', 'true');
+                    alert('✓ Admin login successful! Redirecting to dashboard...');
+                    setTimeout(function() { window.location.href = 'admin-dashboard.html'; }, 1500);
+                    return;
+                }
+                
+                try {
+                    // Sign in with Firebase
+                    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                    const firebaseUser = userCredential.user;
                     
-                    const username = document.getElementById('username').value;
-                    const password = document.getElementById('password').value;
-                    
-                    if (!username || !password) {
-                        alert('Please enter both username and password');
+                    // Check if email is verified
+                    if (!firebaseUser.emailVerified) {
+                        alert('⚠️ Please verify your email address first. A verification link was sent to ' + email + '. Please check your inbox (and spam folder).');
                         return;
                     }
                     
-                    // Admin login check
-                    if (password.toLowerCase().includes('adminjangsu')) {
-                        const adminData = {
-                            username: username,
-                            name: username,
-                            initials: username.substring(0, 2).toUpperCase(),
-                            email: 'admin@jangsu.com',
-                            phone: '+63 XXX XXX XXXX',
-                            role: 'admin'
-                        };
-                        
-                        localStorage.setItem('userData', JSON.stringify(adminData));
-                        localStorage.setItem('userLoggedIn', 'true');
-                        localStorage.setItem('userRole', 'admin');
-                        localStorage.setItem('adminLoggedIn', 'true');
-                        
-                        alert('✓ Admin login successful! Redirecting to dashboard...');
-                        
-                        setTimeout(function() {
-                            window.location.href = 'admin-dashboard.html';
-                        }, 1500);
-                        return;
-                    }
-                    
-                    // Regular user login
+                    // Get existing user data from localStorage
                     const existingUsers = JSON.parse(localStorage.getItem('allUsers') || '[]');
-                    let foundUser = null;
-                    
-                    for (let i = 0; i < existingUsers.length; i++) {
-                        if ((existingUsers[i].username === username || existingUsers[i].email === username) && 
-                            existingUsers[i].password === password) {
-                            foundUser = existingUsers[i];
-                            break;
-                        }
-                    }
+                    let foundUser = existingUsers.find(u => u.email === email);
                     
                     if (foundUser) {
+                        // Update emailVerified status
+                        foundUser.userData.emailVerified = true;
+                        foundUser.emailVerified = true;
+                        localStorage.setItem('allUsers', JSON.stringify(existingUsers));
+                        
                         localStorage.setItem('userData', JSON.stringify(foundUser.userData));
                         localStorage.setItem('userLoggedIn', 'true');
                         localStorage.setItem('userRole', 'user');
@@ -180,7 +165,6 @@
                         
                         alert('✓ Welcome back, ' + foundUser.username + '!');
                         
-                        // Check if there's a redirect URL
                         const redirectUrl = localStorage.getItem('redirectAfterLogin');
                         localStorage.removeItem('redirectAfterLogin');
                         
@@ -192,20 +176,52 @@
                             }
                         }, 1500);
                     } else {
-                        // Check if user exists
-                        const userExists = existingUsers.some(function(u) { 
-                            return u.username === username || u.email === username; 
-                        });
+                        // Create new user record from Firebase data
+                        const newUserData = {
+                            email: email,
+                            username: username,
+                            name: username,
+                            initials: username.substring(0, 2).toUpperCase(),
+                            phone: '+63 XXX XXX XXXX',
+                            role: 'user',
+                            emailVerified: true,
+                            firebaseUID: firebaseUser.uid,
+                            createdAt: new Date().toISOString()
+                        };
                         
-                        if (userExists) {
-                            alert('Incorrect password. Please try again.');
-                        } else {
-                            alert('Account not found. Please sign up first.');
-                        }
+                        existingUsers.push({
+                            username: username,
+                            email: email,
+                            password: password,
+                            userData: newUserData,
+                            firebaseUID: firebaseUser.uid,
+                            emailVerified: true
+                        });
+                        localStorage.setItem('allUsers', JSON.stringify(existingUsers));
+                        
+                        localStorage.setItem('userData', JSON.stringify(newUserData));
+                        localStorage.setItem('userLoggedIn', 'true');
+                        localStorage.setItem('userRole', 'user');
+                        
+                        alert('✓ Welcome! Your email is verified.');
+                        
+                        setTimeout(function() { window.location.href = 'index.html'; }, 1500);
                     }
-                });
-            }
-        });
+                    
+                } catch (error) {
+                    console.error("Login error:", error);
+                    if (error.code === 'auth/user-not-found') {
+                        alert('Account not found. Please sign up first.');
+                    } else if (error.code === 'auth/wrong-password') {
+                        alert('Incorrect password. Please try again.');
+                    } else if (error.code === 'auth/invalid-email') {
+                        alert('Please enter a valid email address.');
+                    } else {
+                        alert('Login failed: ' + error.message);
+                    }
+                }
+            });
+        }
     </script>
 </body>
 </html>
