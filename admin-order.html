@@ -62,17 +62,6 @@
             border: 1px solid #ddd;
             font-size: 14px;
         }
-        .refresh-btn {
-            padding: 8px 20px;
-            background: #1f6fd1;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-        .refresh-btn:hover {
-            background: #155ab3;
-        }
         .orders-table-container {
             overflow-x: auto;
         }
@@ -226,7 +215,6 @@
                     <label style="font-weight: 600;">Search:</label>
                     <input type="text" id="admin-order-search" placeholder="Order #, Customer, or Phone" style="width: 250px;">
                 </div>
-                <button id="admin-refresh-orders" class="refresh-btn">🔄 Refresh</button>
             </div>
             
             <div class="orders-table-container">
@@ -428,13 +416,11 @@
             }
         }
         
-        // Make functions global for onclick
         window.deleteOrder = deleteOrder;
         window.markAsCalled = markAsCalled;
         
         document.getElementById('admin-order-filter')?.addEventListener('change', () => loadAdminOrders());
         document.getElementById('admin-order-search')?.addEventListener('input', () => loadAdminOrders());
-        document.getElementById('admin-refresh-orders')?.addEventListener('click', () => loadAdminOrders());
         
         const userData = localStorage.getItem('userData');
         const adminUser = userData ? JSON.parse(userData) : null;
