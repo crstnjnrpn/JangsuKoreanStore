@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="user.css">
+    <title>Email Verification - Jangsu Korean Store</title>
+    <style>
+        .verification-container {
+            max-width: 600px;
+            margin: 80px auto;
+            padding: 40px;
+            background: white;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        .verification-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        .verification-title {
+            font-size: 28px;
+            color: #1f6fd1;
+            margin-bottom: 20px;
+        }
+        .verification-message {
+            font-size: 16px;
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        .verification-email {
+            font-weight: bold;
+            color: #1f6fd1;
+            background: #f0f7ff;
+            padding: 10px;
+            border-radius: 8px;
+            display: inline-block;
+            margin: 10px 0;
+        }
+        .btn-resend {
+            background: #1f6fd1;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        .btn-login {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px;
+        }
+        .btn-resend:hover {
+            background: #155ab3;
+        }
+        .btn-login:hover {
+            background: #218838;
+        }
+        .note {
+            font-size: 12px;
+            color: #999;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <img src="images/logo.png" alt="KStore Logo">
+        </div>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="products.html">Products</a>
+            <a href="about-us.html">About Us</a>
+        </nav>
+        <div class="header-actions">
+            <div class="cart-icon" id="cart-icon">
+                🛒
+                <span class="cart-badge" id="cart-badge">0</span>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="verification-container">
+            <div class="verification-icon">📧</div>
+            <h1 class="verification-title">Verify Your Email Address</h1>
+            
+            <div class="verification-message">
+                <p>A verification email has been sent to:</p>
+                <p class="verification-email" id="verification-email">Loading...</p>
+                <p>Please check your inbox and click the verification link to activate your account.</p>
+                <p><strong>Didn't receive the email?</strong> Check your spam folder or click the button below to resend.</p>
+            </div>
+            
+            <button id="resend-email" class="btn-resend">📨 Resend Verification Email</button>
+            <a href="user-login.html" class="btn-login">🔑 Go to Login</a>
+            
+            <div class="note">
+                <p>Note: You must verify your email before you can log in and place orders.</p>
+            </div>
+        </div>
+    </main>
+
+    <div class="cart-overlay" id="cart-overlay"></div>
+    <div class="cart-sidebar" id="cart-sidebar">
+        <div class="cart-header">
+            <h2>Your Shopping Cart (<span id="cart-count">0</span>)</h2>
+            <button class="close-cart-btn" id="close-cart">×</button>
+        </div>
+        <div class="cart-items-container" id="cart-items-container">
+            <div class="empty-cart" id="empty-cart">
+                <div class="empty-cart-icon">🛒</div>
+                <p>Your cart is empty</p>
+                <p class="empty-cart-hint">Browse our products and add items to your cart</p>
+            </div>
+            <div class="cart-items-list" id="cart-items-list"></div>
+        </div>
+        <div class="cart-footer" id="cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span class="total-amount" id="cart-total">₱0.00</span>
+            </div>
+            <button class="view-order-btn" id="view-order-btn">View Order</button>
+        </div>
+    </div>
+
+    <footer>
+        <a href="#">Contact Us</a>
+        <span class="separator">|</span>
+        <a href="#">Privacy Policy</a>
+        <span class="copyright">© 2026 Jangsu Korean Store</span>
+    </footer>
+
+    <script src="cart-system.js"></script>
+    <script src="user-system.js"></script>
+    
+    <script type="module">
+        import { auth, sendEmailVerification } from './firebase-config.js';
+        
+        // Get pending email from session storage
+        const pendingEmail = sessionStorage.getItem('pendingVerificationEmail');
+        const pendingUsername = sessionStorage.getItem('pendingVerificationUsername');
+        
+        const emailDisplay = document.getElementById('verification-email');
+        if (emailDisplay && pendingEmail) {
+            emailDisplay.textContent = pendingEmail;
+        } else if (emailDisplay) {
+            emailDisplay.textContent = 'your email address';
+        }
+        
+        // Resend verification email
+        const resendBtn = document.getElementById('resend-email');
+        if (resendBtn && auth.currentUser) {
+            resendBtn.addEventListener('click', async () => {
+                try {
+                    await sendEmailVerification(auth.currentUser);
+                    alert('Verification email has been resent! Please check your inbox.');
+                } catch (error) {
+                    console.error("Resend error:", error);
+                    alert('Error resending email: ' + error.message);
+                }
+            });
+        } else if (resendBtn) {
+            resendBtn.addEventListener('click', () => {
+                alert('Please sign up again to receive a verification email.');
+                window.location.href = 'user-signup.html';
+            });
+        }
+        
+        // Update cart badge
+        function updateCartBadge() {
+            const cart = localStorage.getItem('shoppingCart');
+            const cartItems = cart ? JSON.parse(cart) : [];
+            const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+            const badge = document.getElementById('cart-badge');
+            if (badge) {
+                badge.textContent = totalItems;
+                badge.style.display = totalItems > 0 ? 'flex' : 'none';
+            }
+        }
+        updateCartBadge();
+    </script>
+</body>
+</html>
